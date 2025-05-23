@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block title %}Laporan Pelanggan - Admin{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Laporan Pelanggan</h2>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Jenis Laporan</th>
+                        <th>Tanggal</th>
+                        <th>Isi Laporan</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for laporan in laporan_list %}
+                        <tr>
+                            <td>{{ laporan.id }}</td>
+                            <td>{{ laporan.jenis }}</td>
+                            <td>{{ laporan.tanggal_date|date:"d M Y" }}</td>
+                            <td>{{ laporan.isi|truncatewords:10 }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center">Belum ada laporan</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

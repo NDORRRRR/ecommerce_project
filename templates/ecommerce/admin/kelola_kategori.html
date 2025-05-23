@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block title %}Kelola Kategori - Admin{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Kelola Kategori Produk</h2>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="row">
+            {% for kategori in kategori_list %}
+                <div class="col-md-3 mb-3">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">{{ kategori }}</h5>
+                            <p class="card-text">
+                                <small class="text-muted">
+                                    {{ kategori|length }} produk
+                                </small>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="col-12">
+                    <div class="text-center">
+                        <h4>Belum Ada Kategori</h4>
+                        <p>Tambahkan produk untuk membuat kategori.</p>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
