@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block title %}Kelola Transaksi - Admin{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Kelola Transaksi</h2>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Pembeli</th>
+                        <th>Total</th>
+                        <th>Status</th>
+                        <th>Tanggal</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for transaksi in transaksi_list %}
+                        <tr>
+                            <td>{{ transaksi.id }}</td>
+                            <td>{{ transaksi.pembeli }}</td>
+                            <td>Rp {{ transaksi.total_double|floatformat:0 }}</td>
+                            <td>
+                                <span class="badge bg-{% if transaksi.status == 'completed' %}success{% elif transaksi.status == 'pending' %}warning{% elif transaksi.status == 'paid' %}info{% elif transaksi.status == 'shipped' %}primary{% else %}secondary{% endif %}">
+                                    {{ transaksi.status|title }}
+                                </span>
+                            </td>
+                            <td>{{ transaksi.tanggal_date|date:"d M Y H:i" }}</td>
+                            <td>
+                                <a href="/admin/ecommerce/transaksi/{{ transaksi.id }}/change/" class="btn btn-primary btn-sm">Edit</a>
+                                <a href="{% url 'detail_transaksi' transaksi.id %}" class="btn btn-info btn-sm">Detail</a>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center">Tidak ada transaksi</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

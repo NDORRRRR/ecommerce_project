@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+
+{% block title %}Beranda - E-Commerce{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-3">
+        <!-- Filter Sidebar -->
+        <div class="card">
+            <div class="card-header">
+                <h5>Filter Produk</h5>
+            </div>
+            <div class="card-body">
+                <form method="GET">
+                    <div class="mb-3">
+                        <label for="search" class="form-label">Cari Produk</label>
+                        <input type="text" class="form-control" id="search" name="search" value="{{ search_query }}">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="kategori" class="form-label">Kategori</label>
+                        <select class="form-control" id="kategori" name="kategori">
+                            <option value="">Semua Kategori</option>
+                            {% for kat in kategori_list %}
+                                <option value="{{ kat }}" {% if kat == selected_kategori %}selected{% endif %}>{{ kat }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">Filter</button>
+                    <a href="{% url 'home' %}" class="btn btn-secondary">Reset</a>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-9">
+        <!-- Products Grid -->
+        <div class="row">
+            {% for produk in produk_list %}
+                <div class="col-md-4 mb-4">
+                    <div class="card product-card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ produk.nama }}</h5>
+                            <p class="card-text">
+                                <span class="badge bg-secondary">{{ produk.kategori }}</span><br>
+                                <strong>Rp {{ produk.harga|floatformat:0 }}</strong><br>
+                                <small class="text-muted">Stock: {{ produk.stock }}</small>
+                            </p>
+                            <div class="d-flex justify-content-between">
+                                <a href="{% url 'produk_detail' produk.id %}" class="btn btn-info btn-sm">Detail</a>
+                                {% if user.is_authenticated and produk.stock > 0 %}
+                                    <form method="POST" action="{% url 'buat_transaksi' %}" class="d-inline">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="produk_id" value="{{ produk.id }}">
+                                        <input type="hidden" name="quantity" value="1">
+                                        <button type="submit" class="btn btn-primary btn-sm">Beli</button>
+                                    </form>
+                                {% elif produk.stock == 0 %}
+                                    <span class="btn btn-secondary btn-sm disabled">Habis</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="col-12">
+                    <div class="text-center">
+                        <h4>Tidak ada produk ditemukan</h4>
+                        <p>Coba ubah filter pencarian Anda.</p>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Pagination -->
+        {% if produk_list.has_other_pages %}
+            <nav>
+                <ul class="pagination justify-content-center">
+                    {% if produk_list.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if selected_kategori %}&kategori={{ selected_kategori }}{% endif %}">&laquo; First</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ produk_list.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if selected_kategori %}&kategori={{ selected_kategori }}{% endif %}">Previous</a>
+                        </li>
+                    {% endif %}
+                    
+                    <li class="page-item active">
+                        <span class="page-link">{{ produk_list.number }} of {{ produk_list.paginator.num_pages }}</span>
+                    </li>
+                    
+                    {% if produk_list.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ produk_list.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if selected_kategori %}&kategori={{ selected_kategori }}{% endif %}">Next</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ produk_list.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if selected_kategori %}&kategori={{ selected_kategori }}{% endif %}">Last &raquo;</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

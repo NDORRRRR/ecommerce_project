@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block title %}Profile - E-Commerce{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <h4>Profile Pengguna</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.nama.label_tag }}
+                                {{ form.nama }}
+                            </div>
+                            <div class="mb-3">
+                                {{ form.email.label_tag }}
+                                {{ form.email }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.noHP.label_tag }}
+                                {{ form.noHP }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        {{ form.alamat.label_tag }}
+                        {{ form.alamat }}
+                    </div>
+                    <button type="submit" class="btn btn-primary">Update Profile</button>
+                    <a href="{% url 'riwayat_transaksi' %}" class="btn btn-secondary">Lihat Transaksi</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

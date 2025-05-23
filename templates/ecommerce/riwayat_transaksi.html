@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+
+{% block title %}Riwayat Transaksi - E-Commerce{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Riwayat Transaksi</h2>
+    <a href="{% url 'home' %}" class="btn btn-primary">
+        <i class="fas fa-shopping-bag"></i> Belanja Lagi
+    </a>
+</div>
+
+{% if transaksi_list %}
+    <div class="row">
+        {% for transaksi in transaksi_list %}
+            <div class="col-md-6 mb-3">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between">
+                        <span><strong>Transaksi #{{ transaksi.id }}</strong></span>
+                        <span class="badge bg-{% if transaksi.status == 'completed' %}success{% elif transaksi.status == 'pending' %}warning{% elif transaksi.status == 'paid' %}info{% elif transaksi.status == 'shipped' %}primary{% else %}secondary{% endif %}">
+                            {{ transaksi.status|title }}
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Tanggal:</strong> {{ transaksi.tanggal_date|date:"d M Y H:i" }}</p>
+                        <p><strong>Total:</strong> <span class="text-success">Rp {{ transaksi.total_double|floatformat:0 }}</span></p>
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'detail_transaksi' transaksi.id %}" class="btn btn-info btn-sm">
+                                <i class="fas fa-eye"></i> Detail
+                            </a>
+                            {% if transaksi.status == 'pending' %}
+                                <a href="{% url 'konfirmasi_pembayaran' transaksi.id %}" class="btn btn-success btn-sm">
+                                    <i class="fas fa-check"></i> Konfirmasi Bayar
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Pagination -->
+    {% if transaksi_list.has_other_pages %}
+        <nav>
+            <ul class="pagination justify-content-center">
+                {% if transaksi_list.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ transaksi_list.previous_page_number }}">Previous</a>
+                    </li>
+                {% endif %}
+                
+                <li class="page-item active">
+                    <span class="page-link">{{ transaksi_list.number }} of {{ transaksi_list.paginator.num_pages }}</span>
+                </li>
+                
+                {% if transaksi_list.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ transaksi_list.next_page_number }}">Next</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% endif %}
+{% else %}
+    <div class="text-center">
+        <div class="card">
+            <div class="card-body py-5">
+                <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
+                <h4>Belum Ada Transaksi</h4>
+                <p class="text-muted">Anda belum melakukan transaksi apapun.</p>
+                <a href="{% url 'home' %}" class="btn btn-primary">
+                    <i class="fas fa-shopping-bag"></i> Mulai Belanja
+                </a>
+            </div>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}

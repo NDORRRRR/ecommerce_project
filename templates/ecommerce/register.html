@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block title %}Register - E-Commerce{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4>Register</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.username.label_tag }}
+                                {{ form.username }}
+                                {% if form.username.errors %}
+                                    <div class="text-danger">{{ form.username.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="mb-3">
+                                {{ form.nama.label_tag }}
+                                {{ form.nama }}
+                                {% if form.nama.errors %}
+                                    <div class="text-danger">{{ form.nama.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="mb-3">
+                                {{ form.email.label_tag }}
+                                {{ form.email }}
+                                {% if form.email.errors %}
+                                    <div class="text-danger">{{ form.email.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.noHP.label_tag }}
+                                {{ form.noHP }}
+                                {% if form.noHP.errors %}
+                                    <div class="text-danger">{{ form.noHP.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="mb-3">
+                                {{ form.password1.label_tag }}
+                                {{ form.password1 }}
+                                {% if form.password1.errors %}
+                                    <div class="text-danger">{{ form.password1.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="mb-3">
+                                {{ form.password2.label_tag }}
+                                {{ form.password2 }}
+                                {% if form.password2.errors %}
+                                    <div class="text-danger">{{ form.password2.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        {{ form.alamat.label_tag }}
+                        {{ form.alamat }}
+                        {% if form.alamat.errors %}
+                            <div class="text-danger">{{ form.alamat.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <button type="submit" class="btn btn-primary">Register</button>
+                    <a href="{% url 'login' %}" class="btn btn-link">Sudah punya akun? Login</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block title %}Kelola Produk - Admin{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Kelola Produk</h2>
+    <a href="/admin/ecommerce/produk/add/" class="btn btn-success">
+        <i class="fas fa-plus"></i> Tambah Produk
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nama Produk</th>
+                        <th>Kategori</th>
+                        <th>Harga</th>
+                        <th>Stock</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for produk in produk_list %}
+                        <tr>
+                            <td>{{ produk.id }}</td>
+                            <td>{{ produk.nama }}</td>
+                            <td><span class="badge bg-secondary">{{ produk.kategori }}</span></td>
+                            <td>Rp {{ produk.harga|floatformat:0 }}</td>
+                            <td>
+                                {% if produk.stock > 0 %}
+                                    <span class="text-success">{{ produk.stock }}</span>
+                                {% else %}
+                                    <span class="text-danger">0</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="/admin/ecommerce/produk/{{ produk.id }}/change/" class="btn btn-primary btn-sm">Edit</a>
+                                <a href="{% url 'produk_detail' produk.id %}" class="btn btn-info btn-sm">Lihat</a>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center">Tidak ada produk</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

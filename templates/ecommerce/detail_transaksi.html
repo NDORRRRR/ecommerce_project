@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% block title %}Detail Transaksi #{{ transaksi.id }} - E-Commerce{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4>Detail Transaksi #{{ transaksi.id }}</h4>
+                <span class="badge bg-{% if transaksi.status == 'completed' %}success{% elif transaksi.status == 'pending' %}warning{% elif transaksi.status == 'paid' %}info{% elif transaksi.status == 'shipped' %}primary{% else %}secondary{% endif %} fs-6">
+                    {{ transaksi.status|title }}
+                </span>
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h6>Informasi Transaksi</h6>
+                        <p><strong>Tanggal:</strong> {{ transaksi.tanggal_date|date:"d M Y H:i" }}</p>
+                        <p><strong>Pembeli:</strong> {{ transaksi.pembeli }}</p>
+                        <p><strong>Status:</strong> {{ transaksi.status|title }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Total Pembayaran</h6>
+                        <p class="fs-4 text-success"><strong>Rp {{ transaksi.total_double|floatformat:0 }}</strong></p>
+                    </div>
+                </div>
+                
+                <h6>Item yang Dibeli</h6>
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Produk</th>
+                                <th>Kategori</th>
+                                <th>Harga Satuan</th>
+                                <th>Jumlah</th>
+                                <th>Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in transaksi_produk %}
+                                <tr>
+                                    <td>{{ item.produk.nama }}</td>
+                                    <td><span class="badge bg-secondary">{{ item.produk.kategori }}</span></td>
+                                    <td>Rp {{ item.harga_satuan|floatformat:0 }}</td>
+                                    <td>{{ item.quantity }}</td>
+                                    <td>Rp {{ item.harga_satuan|mul:item.quantity|floatformat:0 }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr class="table-primary">
+                                <td colspan="4"><strong>Total</strong></td>
+                                <td><strong>Rp {{ transaksi.total_double|floatformat:0 }}</strong></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer">
+                <div class="d-flex justify-content-between">
+                    <a href="{% url 'riwayat_transaksi' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Kembali
+                    </a>
+                    {% if transaksi.status == 'pending' %}
+                        <a href="{% url 'konfirmasi_pembayaran' transaksi.id %}" class="btn btn-success">
+                            <i class="fas fa-check"></i> Konfirmasi Pembayaran
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
