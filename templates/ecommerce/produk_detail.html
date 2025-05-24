@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="row">
-    <div class="col-md-8 mx-auto">
+    <div class="col-md-10 mx-auto">
         <div class="card">
             <div class="card-header">
                 <h4>{{ produk.nama }}</h4>
@@ -12,30 +12,113 @@
             <div class="card-body">
                 <div class="row">
                     <div class="col-md-6">
-                        <h5>Detail Produk</h5>
-                        <p><strong>Kategori:</strong> <span class="badge bg-secondary">{{ produk.kategori }}</span></p>
-                        <p><strong>Harga:</strong> <span class="text-success fs-4">Rp {{ produk.harga|floatformat:0 }}</span></p>
-                        <p><strong>Stock:</strong> 
+                        <h5><i class="fas fa-info-circle"></i> Detail Produk</h5>
+                        <div class="mb-3">
+                            <strong>Kategori:</strong> 
+                            <span class="badge bg-secondary">{{ produk.kategori }}</span>
+                        </div>
+                        <div class="mb-3">
+                            <strong>Harga:</strong> 
+                            <span class="text-success fs-4">Rp {{ produk.harga|floatformat:0 }}</span>
+                        </div>
+                        <div class="mb-3">
+                            <strong>Berat:</strong> {{ produk.berat|floatformat:1 }} kg
+                        </div>
+                        <div class="mb-3">
+                            <strong>Stock:</strong> 
                             {% if produk.stock > 0 %}
                                 <span class="text-success">{{ produk.stock }} tersedia</span>
                             {% else %}
                                 <span class="text-danger">Habis</span>
                             {% endif %}
-                        </p>
+                        </div>
                     </div>
+                    
                     <div class="col-md-6">
                         {% if user.is_authenticated %}
                             {% if produk.stock > 0 %}
-                                <h5>Beli Produk</h5>
-                                <form method="POST" action="{% url 'buat_transaksi' %}">
+                                <h5><i class="fas fa-shopping-cart"></i> Beli Produk</h5>
+                                <form method="POST" action="{% url 'buat_transaksi' %}" id="checkoutForm">
                                     {% csrf_token %}
                                     <input type="hidden" name="produk_id" value="{{ produk.id }}">
+                                    
+                                    <!-- Quantity -->
                                     <div class="mb-3">
                                         <label for="quantity" class="form-label">Jumlah</label>
                                         <input type="number" class="form-control" id="quantity" name="quantity" 
-                                               value="1" min="1" max="{{ produk.stock }}">
+                                               value="1" min="1" max="{{ produk.stock }}" onchange="calculateTotal()">
                                     </div>
-                                    <button type="submit" class="btn btn-primary btn-lg">
+                                    
+                                    <!-- Pilihan Ekspedisi -->
+                                    <div class="mb-3">
+                                        <label class="form-label">Pilih Ekspedisi Pengiriman</label>
+                                        <div class="ekspedisi-options">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="ekspedisi" id="jne" value="jne" onchange="calculateShipping()" checked>
+                                                <label class="form-check-label" for="jne">
+                                                    <div class="d-flex justify-content-between">
+                                                        <span><strong>JNE</strong> (1-3 hari)</span>
+                                                        <span class="text-primary">Rp <span id="jne-price">9,000</span></span>
+                                                    </div>
+                                                </label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="ekspedisi" id="pos" value="pos" onchange="calculateShipping()">
+                                                <label class="form-check-label" for="pos">
+                                                    <div class="d-flex justify-content-between">
+                                                        <span><strong>Pos Indonesia</strong> (2-4 hari)</span>
+                                                        <span class="text-primary">Rp <span id="pos-price">8,000</span></span>
+                                                    </div>
+                                                </label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="ekspedisi" id="sicepat" value="sicepat" onchange="calculateShipping()">
+                                                <label class="form-check-label" for="sicepat">
+                                                    <div class="d-flex justify-content-between">
+                                                        <span><strong>SiCepat</strong> (1-2 hari)</span>
+                                                        <span class="text-primary">Rp <span id="sicepat-price">8,000</span></span>
+                                                    </div>
+                                                </label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="ekspedisi" id="gosend" value="gosend" onchange="calculateShipping()">
+                                                <label class="form-check-label" for="gosend">
+                                                    <div class="d-flex justify-content-between">
+                                                        <span><strong>GoSend</strong> (Same Day)</span>
+                                                        <span class="text-primary">Rp <span id="gosend-price">15,000</span></span>
+                                                    </div>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Total Calculation -->
+                                    <div class="mb-3">
+                                        <div class="card bg-light">
+                                            <div class="card-body">
+                                                <h6>Ringkasan Pembelian</h6>
+                                                <div class="d-flex justify-content-between">
+                                                    <span>Harga Produk:</span>
+                                                    <span>Rp <span id="product-total">{{ produk.harga|floatformat:0 }}</span></span>
+                                                </div>
+                                                <div class="d-flex justify-content-between">
+                                                    <span>Ongkos Kirim:</span>
+                                                    <span>Rp <span id="shipping-cost">9,000</span></span>
+                                                </div>
+                                                <div class="d-flex justify-content-between">
+                                                    <span>Berat Total:</span>
+                                                    <span><span id="total-weight">{{ produk.berat|floatformat:1 }}</span> kg</span>
+                                                </div>
+                                                <hr>
+                                                <div class="d-flex justify-content-between fw-bold">
+                                                    <span>Total:</span>
+                                                    <span class="text-success">Rp <span id="grand-total">{{ produk.harga|add:9000|floatformat:0 }}</span></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <button type="submit" class="btn btn-primary btn-lg w-100">
                                         <i class="fas fa-shopping-cart"></i> Beli Sekarang
                                     </button>
                                 </form>
@@ -62,4 +145,83 @@
         </div>
     </div>
 </div>
+
+<style>
+.ekspedisi-options .form-check {
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #dee2e6;
+    border-radius: 5px;
+    transition: all 0.2s;
+}
+
+.ekspedisi-options .form-check:hover {
+    background-color: #f8f9fa;
+    border-color: #007bff;
+}
+
+.ekspedisi-options .form-check-input:checked + .form-check-label {
+    color: #007bff;
+    font-weight: 500;
+}
+</style>
+
+<script>
+const produkHarga = {{ produk.harga }};
+const produkBerat = {{ produk.berat }};
+
+// Shipping rates per kg
+const shippingRates = {
+    'jne': 9000,
+    'pos': 8000,
+    'tiki': 9500,
+    'j&t': 8500,
+    'sicepat': 8000,
+    'anteraja': 7500,
+    'ninja': 7000,
+    'gosend': 15000,
+    'grab': 12000
+};
+
+function calculateShipping() {
+    const selectedEkspedisi = document.querySelector('input[name="ekspedisi"]:checked').value;
+    const quantity = parseInt(document.getElementById('quantity').value);
+    const totalWeight = produkBerat * quantity;
+    
+    let shippingCost = shippingRates[selectedEkspedisi];
+    
+    // Additional cost for weight > 1kg
+    if (totalWeight > 1) {
+        const additionalWeight = totalWeight - 1;
+        shippingCost += (additionalWeight * shippingCost * 0.5);
+    }
+    
+    document.getElementById('shipping-cost').textContent = Math.round(shippingCost).toLocaleString('id-ID');
+    calculateTotal();
+}
+
+function calculateTotal() {
+    const quantity = parseInt(document.getElementById('quantity').value);
+    const productTotal = produkHarga * quantity;
+    const totalWeight = produkBerat * quantity;
+    
+    // Get current shipping cost
+    const shippingCostText = document.getElementById('shipping-cost').textContent.replace(/\./g, '');
+    const shippingCost = parseInt(shippingCostText);
+    
+    const grandTotal = productTotal + shippingCost;
+    
+    document.getElementById('product-total').textContent = productTotal.toLocaleString('id-ID');
+    document.getElementById('total-weight').textContent = totalWeight.toFixed(1);
+    document.getElementById('grand-total').textContent = grandTotal.toLocaleString('id-ID');
+    
+    // Recalculate shipping if needed
+    calculateShipping();
+}
+
+// Initialize calculation
+document.addEventListener('DOMContentLoaded', function() {
+    calculateShipping();
+});
+</script>
 {% endblock %}

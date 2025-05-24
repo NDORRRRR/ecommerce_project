@@ -1,0 +1,329 @@
+{% extends 'base.html' %}
+
+{% block title %}Update Status Pengiriman - Admin{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4><i class="fas fa-edit"></i> Update Status Pengiriman</h4>
+                <span class="badge bg-{{ pengiriman.get_status_badge_color }} fs-6">
+                    Status Saat Ini: {{ pengiriman.tampilkanstatus }}
+                </span>
+            </div>
+            
+            <div class="card-body">
+                <!-- Info Pengiriman -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-info-circle"></i> Informasi Pengiriman</h6>
+                        <div class="bg-light p-3 rounded">
+                            <p><strong>ID Pengiriman:</strong> #{{ pengiriman.id }}</p>
+                            <p><strong>Ekspedisi:</strong> 
+                                <span class="badge bg-primary">{{ pengiriman.get_ekspedisi_display }}</span>
+                            </p>
+                            <p><strong>Ongkir:</strong> Rp {{ pengiriman.ongkir|floatformat:0 }}</p>
+                            <p><strong>Dibuat:</strong> {{ pengiriman.created_at|date:"d M Y H:i" }}</p>
+                            {% if pengiriman.tanggal_kirim %}
+                            <p><strong>Tanggal Kirim:</strong> {{ pengiriman.tanggal_kirim|date:"d M Y H:i" }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-map-marker-alt"></i> Alamat Tujuan</h6>
+                        <div class="bg-light p-3 rounded">
+                            {{ pengiriman.alamat_penerima }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Update Status -->
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="status" class="form-label">
+                                    <i class="fas fa-shipping-fast"></i> Status Pengiriman
+                                </label>
+                                <select name="status" id="status" class="form-control" onchange="handleStatusChange()">
+                                    {% for value, label in status_choices %}
+                                        <option value="{{ value }}" 
+                                                {% if value == pengiriman.status %}selected{% endif %}
+                                                data-badge="{% if value == 'pending' %}secondary{% elif value == 'processing' %}warning{% elif value == 'shipped' %}info{% elif value == 'in_transit' %}primary{% elif value == 'out_for_delivery' %}primary{% elif value == 'delivered' %}success{% elif value == 'failed' %}danger{% else %}dark{% endif %}">
+                                            {{ label }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                <div class="form-text">
+                                    Preview: <span id="status-preview" class="badge bg-{{ pengiriman.get_status_badge_color }}">{{ pengiriman.tampilkanstatus }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="no_resi" class="form-label">
+                                    <i class="fas fa-barcode"></i> Nomor Resi
+                                </label>
+                                <div class="input-group">
+                                    <input type="text" name="no_resi" id="no_resi" 
+                                           class="form-control" 
+                                           value="{{ pengiriman.no_resi|default:'' }}"
+                                           placeholder="Masukkan nomor resi">
+                                    <button type="button" class="btn btn-outline-secondary" onclick="generateResi()">
+                                        <i class="fas fa-random"></i> Generate
+                                    </button>
+                                </div>
+                                <div class="form-text">
+                                    Kosongkan jika belum ada nomor resi
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="catatan" class="form-label">
+                            <i class="fas fa-sticky-note"></i> Catatan Update
+                        </label>
+                        <textarea name="catatan" id="catatan" class="form-control" rows="3" 
+                                  placeholder="Masukkan catatan untuk update status ini (opsional)">{{ pengiriman.catatan|default:'' }}</textarea>
+                        <div class="form-text">
+                            Catatan ini akan terlihat oleh customer di tracking
+                        </div>
+                    </div>
+
+                    <!-- Status Change Alerts -->
+                    <div id="status-alerts">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'kelola_pengiriman' %}" class="btn btn-secondary me-md-2">
+                            <i class="fas fa-arrow-left"></i> Batal
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Update Status
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Quick Actions Card -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6><i class="fas fa-bolt"></i> Quick Actions</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <button class="btn btn-outline-warning w-100" onclick="setStatus('processing')">
+                            <i class="fas fa-cog"></i><br>Set Processing
+                        </button>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-outline-info w-100" onclick="setStatus('shipped')">
+                            <i class="fas fa-shipping-fast"></i><br>Set Shipped
+                        </button>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-outline-primary w-100" onclick="setStatus('in_transit')">
+                            <i class="fas fa-truck"></i><br>In Transit
+                        </button>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-outline-success w-100" onclick="setStatus('delivered')">
+                            <i class="fas fa-check-circle"></i><br>Delivered
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Timeline Preview -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6><i class="fas fa-history"></i> Timeline Preview</h6>
+            </div>
+            <div class="card-body">
+                <div class="timeline-preview">
+                    <div class="timeline-item completed">
+                        <div class="timeline-icon bg-secondary">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <strong>Pesanan Dibuat</strong><br>
+                            <small>{{ pengiriman.created_at|date:"d M Y H:i" }}</small>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item {% if pengiriman.status != 'pending' %}completed{% endif %}">
+                        <div class="timeline-icon bg-warning">
+                            <i class="fas fa-cog"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <strong>Sedang Diproses</strong><br>
+                            <small>Pesanan sedang dipersiapkan</small>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item {% if pengiriman.status == 'shipped' or pengiriman.status == 'in_transit' or pengiriman.status == 'out_for_delivery' or pengiriman.status == 'delivered' %}completed{% endif %}">
+                        <div class="timeline-icon bg-info">
+                            <i class="fas fa-shipping-fast"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <strong>Paket Dikirim</strong><br>
+                            <small>{% if pengiriman.tanggal_kirim %}{{ pengiriman.tanggal_kirim|date:"d M Y H:i" }}{% else %}Menunggu pengiriman{% endif %}</small>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item {% if pengiriman.status == 'delivered' %}completed{% endif %}">
+                        <div class="timeline-icon bg-success">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <strong>Paket Terkirim</strong><br>
+                            <small>{% if pengiriman.tanggal_terkirim %}{{ pengiriman.tanggal_terkirim|date:"d M Y H:i" }}{% else %}Belum terkirim{% endif %}</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.timeline-preview {
+    position: relative;
+    padding-left: 30px;
+}
+
+.timeline-preview::before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #dee2e6;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 20px;
+    opacity: 0.5;
+}
+
+.timeline-item.completed {
+    opacity: 1;
+}
+
+.timeline-icon {
+    position: absolute;
+    left: -22px;
+    top: 5px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 12px;
+}
+
+.timeline-content {
+    background: #f8f9fa;
+    padding: 10px;
+    border-radius: 5px;
+    border-left: 3px solid #007bff;
+}
+
+.quick-actions .btn {
+    margin: 5px 0;
+}
+</style>
+
+<script>
+function handleStatusChange() {
+    const statusSelect = document.getElementById('status');
+    const selectedOption = statusSelect.options[statusSelect.selectedIndex];
+    const badgeColor = selectedOption.getAttribute('data-badge');
+    const statusText = selectedOption.text;
+    
+    // Update preview badge
+    const preview = document.getElementById('status-preview');
+    preview.className = `badge bg-${badgeColor}`;
+    preview.textContent = statusText;
+    
+    // Show relevant alerts
+    showStatusAlert(statusSelect.value);
+    
+    // Auto-generate resi if status is shipped and no resi exists
+    if (statusSelect.value === 'shipped' && !document.getElementById('no_resi').value) {
+        generateResi();
+    }
+}
+
+function showStatusAlert(status) {
+    const alertContainer = document.getElementById('status-alerts');
+    let alertHtml = '';
+    
+    switch(status) {
+        case 'shipped':
+            alertHtml = `
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> 
+                    <strong>Status Shipped:</strong> Pastikan nomor resi sudah diisi dan paket benar-benar telah dikirim.
+                </div>`;
+            break;
+        case 'delivered':
+            alertHtml = `
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle"></i> 
+                    <strong>Status Delivered:</strong> Transaksi akan otomatis ditandai sebagai completed.
+                </div>`;
+            break;
+        case 'failed':
+            alertHtml = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle"></i> 
+                    <strong>Status Failed:</strong> Jelaskan alasan kegagalan pengiriman di catatan.
+                </div>`;
+            break;
+    }
+    
+    alertContainer.innerHTML = alertHtml;
+}
+
+function generateResi() {
+    const ekspedisi = '{{ pengiriman.ekspedisi|upper }}';
+    const timestamp = Date.now().toString().slice(-8);
+    const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+    const resi = ekspedisi + timestamp + random;
+    
+    document.getElementById('no_resi').value = resi;
+}
+
+function setStatus(status) {
+    document.getElementById('status').value = status;
+    handleStatusChange();
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    handleStatusChange();
+});
+
+// Confirmation before submit
+document.querySelector('form').addEventListener('submit', function(e) {
+    const status = document.getElementById('status').value;
+    const statusText = document.getElementById('status').options[document.getElementById('status').selectedIndex].text;
+    
+    if (!confirm(`Apakah Anda yakin ingin mengubah status menjadi "${statusText}"?`)) {
+        e.preventDefault();
+    }
+});
+</script>
+{% endblock %}

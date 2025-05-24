@@ -1,3 +1,4 @@
+# models.py - UPDATED dengan integrasi pengiriman
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import MinValueValidator
@@ -54,6 +55,7 @@ class Produk(models.Model):
     kategori = models.CharField(max_length=100)
     harga = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal('0.01'))])
     stock = models.IntegerField(validators=[MinValueValidator(0)])
+    berat = models.DecimalField(max_digits=8, decimal_places=2, default=1.0, help_text="Berat dalam kg")  # NEW
     
     def updatestock(self):
         # Method untuk update stock
@@ -63,20 +65,64 @@ class Produk(models.Model):
         return self.nama
 
 class Pengiriman(models.Model):
-    alamat = models.TextField()
-    ongkir = models.DecimalField(max_digits=10, decimal_places=2)
-    status = models.CharField(max_length=50, choices=[
+    STATUS_CHOICES = [
         ('pending', 'Pending'),
-        ('processing', 'Processing'),
-        ('shipped', 'Shipped'),
-        ('delivered', 'Delivered')
-    ])
+        ('processing', 'Sedang Diproses'),
+        ('shipped', 'Dikirim'),
+        ('in_transit', 'Dalam Perjalanan'),
+        ('out_for_delivery', 'Keluar untuk Pengiriman'),
+        ('delivered', 'Terkirim'),
+        ('failed', 'Gagal Kirim'),
+        ('returned', 'Dikembalikan')
+    ]
+    
+    EKSPEDISI_CHOICES = [
+        ('jne', 'JNE'),
+        ('pos', 'Pos Indonesia'),
+        ('tiki', 'TIKI'),
+        ('j&t', 'J&T Express'),
+        ('sicepat', 'SiCepat'),
+        ('anteraja', 'AnterAja'),
+        ('ninja', 'Ninja Express'),
+        ('gosend', 'GoSend'),
+        ('grab', 'GrabExpress')
+    ]
+    
+    alamat_pengirim = models.TextField(default="Toko E-Commerce, Surabaya")
+    alamat_penerima = models.TextField()
+    ongkir = models.DecimalField(max_digits=10, decimal_places=2)
+    status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='pending')
+    ekspedisi = models.CharField(max_length=20, choices=EKSPEDISI_CHOICES, default='jne')  # NEW
+    no_resi = models.CharField(max_length=50, blank=True, null=True)  # NEW
+    estimasi_hari = models.IntegerField(default=3, help_text="Estimasi pengiriman dalam hari")  # NEW
+    tanggal_kirim = models.DateTimeField(blank=True, null=True)  # NEW
+    tanggal_terkirim = models.DateTimeField(blank=True, null=True)  # NEW
+    catatan = models.TextField(blank=True, null=True)  # NEW
+    created_at = models.DateTimeField(auto_now_add=True)  # NEW
+    updated_at = models.DateTimeField(auto_now=True)  # NEW
     
     def totalongkir(self):
         return self.ongkir
     
     def tampilkanstatus(self):
-        return self.status
+        return self.get_status_display()
+    
+    def get_status_badge_color(self):
+        """Return Bootstrap badge color based on status"""
+        status_colors = {
+            'pending': 'secondary',
+            'processing': 'warning',
+            'shipped': 'info',
+            'in_transit': 'primary',
+            'out_for_delivery': 'primary',
+            'delivered': 'success',
+            'failed': 'danger',
+            'returned': 'dark'
+        }
+        return status_colors.get(self.status, 'secondary')
+    
+    def __str__(self):
+        return f"Pengiriman {self.no_resi or self.id} - {self.get_status_display()}"
 
 class LaporanPengiriman(models.Model):
     pengiriman = models.ForeignKey(Pengiriman, on_delete=models.CASCADE)
@@ -109,6 +155,7 @@ class Transaksi(models.Model):
     ])
     total_double = models.DecimalField(max_digits=12, decimal_places=2)
     tanggal_date = models.DateTimeField(auto_now_add=True)
+    pengiriman = models.OneToOneField(Pengiriman, on_delete=models.SET_NULL, null=True, blank=True)  # NEW
     
     def pengeloladatakategori(self):
         # Method untuk mengelola data kategori
@@ -116,7 +163,7 @@ class Transaksi(models.Model):
     
     def dataongkir(self):
         # Method untuk mendapatkan data ongkir
-        pass
+        return self.pengiriman.ongkir if self.pengiriman else 0
     
     def statuslv(self):
         # Method untuk status level
@@ -130,6 +177,13 @@ class Transaksi(models.Model):
     def hitungtotal(self):
         # Method untuk menghitung total
         return self.total_double
+    
+    def get_total_berat(self):
+        """Calculate total weight of all products in transaction"""
+        total_berat = 0
+        for item in self.transaksiproduk_set.all():
+            total_berat += (item.produk.berat * item.quantity)
+        return total_berat
 
 # Junction table untuk many-to-many relationship antara produk dan transaksi
 class TransaksiProduk(models.Model):
@@ -137,6 +191,12 @@ class TransaksiProduk(models.Model):
     produk = models.ForeignKey(Produk, on_delete=models.CASCADE)
     quantity = models.IntegerField(validators=[MinValueValidator(1)])
     harga_satuan = models.DecimalField(max_digits=10, decimal_places=2)
+    
+    def get_subtotal(self):
+        return self.harga_satuan * self.quantity
+    
+    def get_berat_total(self):
+        return self.produk.berat * self.quantity
     
     class Meta:
         unique_together = ('transaksi', 'produk')

@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="row">
-    <div class="col-md-8 mx-auto">
+    <div class="col-md-10 mx-auto">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h4>Detail Transaksi #{{ transaksi.id }}</h4>
@@ -15,18 +15,72 @@
             <div class="card-body">
                 <div class="row mb-4">
                     <div class="col-md-6">
-                        <h6>Informasi Transaksi</h6>
+                        <h6><i class="fas fa-receipt"></i> Informasi Transaksi</h6>
                         <p><strong>Tanggal:</strong> {{ transaksi.tanggal_date|date:"d M Y H:i" }}</p>
                         <p><strong>Pembeli:</strong> {{ transaksi.pembeli }}</p>
                         <p><strong>Status:</strong> {{ transaksi.status|title }}</p>
                     </div>
                     <div class="col-md-6">
-                        <h6>Total Pembayaran</h6>
+                        <h6><i class="fas fa-calculator"></i> Total Pembayaran</h6>
                         <p class="fs-4 text-success"><strong>Rp {{ transaksi.total_double|floatformat:0 }}</strong></p>
+                        {% if transaksi.pengiriman %}
+                        <small class="text-muted">
+                            (Termasuk ongkir: Rp {{ transaksi.pengiriman.ongkir|floatformat:0 }})
+                        </small>
+                        {% endif %}
                     </div>
                 </div>
                 
-                <h6>Item yang Dibeli</h6>
+                <!-- Pengiriman Info -->
+                {% if transaksi.pengiriman %}
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="card border-primary">
+                            <div class="card-header bg-primary text-white">
+                                <h6 class="mb-0"><i class="fas fa-shipping-fast"></i> Informasi Pengiriman</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <strong>Ekspedisi:</strong><br>
+                                        <span class="badge bg-primary">{{ transaksi.pengiriman.get_ekspedisi_display }}</span>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <strong>Status Pengiriman:</strong><br>
+                                        <span class="badge bg-{{ transaksi.pengiriman.get_status_badge_color }}">
+                                            {{ transaksi.pengiriman.tampilkanstatus }}
+                                        </span>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <strong>No. Resi:</strong><br>
+                                        {% if transaksi.pengiriman.no_resi %}
+                                            <code>{{ transaksi.pengiriman.no_resi }}</code>
+                                        {% else %}
+                                            <span class="text-muted">Belum tersedia</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="mt-3">
+                                    <strong>Alamat Tujuan:</strong><br>
+                                    <div class="p-2 bg-light rounded">
+                                        {{ transaksi.pengiriman.alamat_penerima }}
+                                    </div>
+                                </div>
+                                <div class="mt-3">
+                                    <a href="{% url 'detail_pengiriman' transaksi.id %}" class="btn btn-primary btn-sm">
+                                        <i class="fas fa-info-circle"></i> Detail Pengiriman
+                                    </a>
+                                    <a href="{% url 'track_pengiriman' transaksi.id %}" class="btn btn-info btn-sm">
+                                        <i class="fas fa-route"></i> Track Paket
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <h6><i class="fas fa-shopping-cart"></i> Item yang Dibeli</h6>
                 <div class="table-responsive">
                     <table class="table table-striped">
                         <thead>
@@ -35,6 +89,7 @@
                                 <th>Kategori</th>
                                 <th>Harga Satuan</th>
                                 <th>Jumlah</th>
+                                <th>Berat</th>
                                 <th>Subtotal</th>
                             </tr>
                         </thead>
@@ -45,13 +100,24 @@
                                     <td><span class="badge bg-secondary">{{ item.produk.kategori }}</span></td>
                                     <td>Rp {{ item.harga_satuan|floatformat:0 }}</td>
                                     <td>{{ item.quantity }}</td>
-                                    <td>Rp {{ item.harga_satuan|mul:item.quantity|floatformat:0 }}</td>
+                                    <td>{{ item.get_berat_total|floatformat:1 }} kg</td>
+                                    <td>Rp {{ item.get_subtotal|floatformat:0 }}</td>
                                 </tr>
                             {% endfor %}
                         </tbody>
                         <tfoot>
+                            <tr class="table-secondary">
+                                <td colspan="5"><strong>Subtotal Produk</strong></td>
+                                <td><strong>Rp {{ transaksi.total_double|add:transaksi.pengiriman.ongkir|floatformat:0 }}</strong></td>
+                            </tr>
+                            {% if transaksi.pengiriman %}
+                            <tr class="table-info">
+                                <td colspan="5"><strong>Ongkos Kirim ({{ transaksi.pengiriman.get_ekspedisi_display }})</strong></td>
+                                <td><strong>Rp {{ transaksi.pengiriman.ongkir|floatformat:0 }}</strong></td>
+                            </tr>
+                            {% endif %}
                             <tr class="table-primary">
-                                <td colspan="4"><strong>Total</strong></td>
+                                <td colspan="5"><strong>Total Keseluruhan</strong></td>
                                 <td><strong>Rp {{ transaksi.total_double|floatformat:0 }}</strong></td>
                             </tr>
                         </tfoot>
@@ -63,14 +129,44 @@
                     <a href="{% url 'riwayat_transaksi' %}" class="btn btn-secondary">
                         <i class="fas fa-arrow-left"></i> Kembali
                     </a>
-                    {% if transaksi.status == 'pending' %}
-                        <a href="{% url 'konfirmasi_pembayaran' transaksi.id %}" class="btn btn-success">
-                            <i class="fas fa-check"></i> Konfirmasi Pembayaran
-                        </a>
-                    {% endif %}
+                    <div>
+                        {% if transaksi.status == 'pending' %}
+                            <a href="{% url 'konfirmasi_pembayaran' transaksi.id %}" class="btn btn-success">
+                                <i class="fas fa-check"></i> Konfirmasi Pembayaran
+                            </a>
+                        {% endif %}
+                        {% if transaksi.pengiriman %}
+                            <a href="{% url 'detail_pengiriman' transaksi.id %}" class="btn btn-primary">
+                                <i class="fas fa-shipping-fast"></i> Info Pengiriman
+                            </a>
+                        {% endif %}
+                        <button class="btn btn-info" onclick="printInvoice()">
+                            <i class="fas fa-print"></i> Print Invoice
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+function printInvoice() {
+    // Simple print functionality
+    window.print();
+}
+</script>
+
+<style>
+@media print {
+    .btn, .card-footer, .navbar, footer {
+        display: none !important;
+    }
+    
+    .card {
+        border: none !important;
+        box-shadow: none !important;
+    }
+}
+</style>
 {% endblock %}
