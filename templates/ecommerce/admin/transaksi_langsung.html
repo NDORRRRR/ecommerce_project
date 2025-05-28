@@ -1,0 +1,477 @@
+{% extends 'base.html' %}
+
+{% block title %}Transaksi Langsung - Admin{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-cash-register"></i> Transaksi Langsung (Point of Sale)</h2>
+    <button class="btn btn-danger" onclick="resetTransaction()">
+        <i class="fas fa-redo"></i> Reset
+    </button>
+</div>
+
+<div class="row">
+    <!-- Product Selection -->
+    <div class="col-md-8">
+        <!-- Search Bar -->
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                    <input type="text" class="form-control" id="productSearch" 
+                           placeholder="Cari produk berdasarkan nama atau scan barcode..." 
+                           onkeyup="searchProducts(this.value)">
+                    <button class="btn btn-primary" onclick="scanBarcode()">
+                        <i class="fas fa-barcode"></i> Scan
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Category Filter -->
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="btn-group w-100" role="group">
+                    <button class="btn btn-outline-primary active" onclick="filterCategory('all')">
+                        Semua
+                    </button>
+                    {% for kategori in kategori_list %}
+                        <button class="btn btn-outline-primary" onclick="filterCategory('{{ kategori }}')">
+                            {{ kategori }}
+                        </button>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Products Grid -->
+        <div class="card">
+            <div class="card-body">
+                <div class="row" id="productGrid">
+                    {% for produk in produk_list %}
+                        <div class="col-md-4 col-sm-6 mb-3 product-item" data-category="{{ produk.kategori }}">
+                            <div class="card h-100 product-card" onclick="addToCart({{ produk.id }}, '{{ produk.nama }}', {{ produk.harga }})">
+                                <div class="card-body text-center">
+                                    <h6 class="card-title">{{ produk.nama }}</h6>
+                                    <p class="card-text">
+                                        <span class="badge bg-secondary">{{ produk.kategori }}</span><br>
+                                        <strong>Rp {{ produk.harga|floatformat:0 }}</strong><br>
+                                        <small class="text-muted">Stock: {{ produk.stock }}</small>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Cart & Checkout -->
+    <div class="col-md-4">
+        <div class="card sticky-top" style="top: 20px;">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-shopping-cart"></i> Keranjang Belanja</h5>
+            </div>
+            <div class="card-body">
+                <!-- Customer Selection -->
+                <div class="mb-3">
+                    <label class="form-label">Pelanggan</label>
+                    <select class="form-control" id="customerSelect" onchange="updateCustomerInfo()">
+                        <option value="">-- Walk-in Customer --</option>
+                        {% for buyer in buyer_list %}
+                            <option value="{{ buyer.id }}" 
+                                    data-nama="{{ buyer.user.nama }}"
+                                    data-email="{{ buyer.user.email }}"
+                                    data-phone="{{ buyer.user.noHP }}">
+                                {{ buyer.user.nama }} ({{ buyer.user.username }})
+                            </option>
+                        {% endfor %}
+                    </select>
+                    <small class="text-muted">atau <a href="#" onclick="addNewCustomer()">Tambah Pelanggan Baru</a></small>
+                </div>
+                
+                <!-- Cart Items -->
+                <div id="cartItems" class="mb-3">
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-shopping-basket fa-3x mb-2"></i>
+                        <p>Keranjang kosong</p>
+                    </div>
+                </div>
+                
+                <!-- Totals -->
+                <div class="border-top pt-3">
+                    <div class="d-flex justify-content-between">
+                        <span>Subtotal:</span>
+                        <span id="subtotal">Rp 0</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span>Diskon:</span>
+                        <div class="input-group input-group-sm" style="width: 120px;">
+                            <input type="number" class="form-control" id="discount" value="0" min="0" max="100" onchange="updateTotals()">
+                            <span class="input-group-text">%</span>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span>Tax (11%):</span>
+                        <span id="tax">Rp 0</span>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between fw-bold">
+                        <span>Total:</span>
+                        <span id="total" class="text-primary">Rp 0</span>
+                    </div>
+                </div>
+                
+                <!-- Payment Method -->
+                <div class="mt-3">
+                    <label class="form-label">Metode Pembayaran</label>
+                    <div class="btn-group w-100" role="group">
+                        <input type="radio" class="btn-check" name="payment" id="cash" value="cash" checked>
+                        <label class="btn btn-outline-primary" for="cash">
+                            <i class="fas fa-money-bill"></i> Cash
+                        </label>
+                        
+                        <input type="radio" class="btn-check" name="payment" id="card" value="card">
+                        <label class="btn btn-outline-primary" for="card">
+                            <i class="fas fa-credit-card"></i> Card
+                        </label>
+                        
+                        <input type="radio" class="btn-check" name="payment" id="transfer" value="transfer">
+                        <label class="btn btn-outline-primary" for="transfer">
+                            <i class="fas fa-exchange-alt"></i> Transfer
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Cash Payment -->
+                <div id="cashPayment" class="mt-3">
+                    <label class="form-label">Uang Diterima</label>
+                    <input type="number" class="form-control" id="cashReceived" onkeyup="calculateChange()">
+                    <div class="mt-2">
+                        <span>Kembalian: </span>
+                        <span id="change" class="fw-bold">Rp 0</span>
+                    </div>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="mt-4 d-grid gap-2">
+                    <button class="btn btn-success btn-lg" onclick="processTransaction()">
+                        <i class="fas fa-check"></i> Proses Transaksi
+                    </button>
+                    <button class="btn btn-info" onclick="holdTransaction()">
+                        <i class="fas fa-pause"></i> Hold
+                    </button>
+                    <button class="btn btn-warning" onclick="printReceipt()">
+                        <i class="fas fa-print"></i> Print Struk
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- New Customer Modal -->
+<div class="modal fade" id="newCustomerModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Tambah Pelanggan Baru</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="newCustomerForm">
+                    <div class="mb-3">
+                        <label class="form-label">Nama</label>
+                        <input type="text" class="form-control" id="newCustomerName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">No. HP</label>
+                        <input type="text" class="form-control" id="newCustomerPhone" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email (Optional)</label>
+                        <input type="email" class="form-control" id="newCustomerEmail">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-primary" onclick="saveNewCustomer()">Simpan</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.product-card {
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.cart-item {
+    border-bottom: 1px solid #dee2e6;
+    padding: 10px 0;
+}
+
+.cart-item:last-child {
+    border-bottom: none;
+}
+</style>
+
+<script>
+let cart = {};
+let productData = {};
+
+// Initialize product data
+{% for produk in produk_list %}
+productData[{{ produk.id }}] = {
+    id: {{ produk.id }},
+    nama: "{{ produk.nama }}",
+    harga: {{ produk.harga }},
+    stock: {{ produk.stock }},
+    kategori: "{{ produk.kategori }}"
+};
+{% endfor %}
+
+function addToCart(productId, productName, price) {
+    if (productData[productId].stock <= 0) {
+        alert('Produk habis!');
+        return;
+    }
+    
+    if (cart[productId]) {
+        if (cart[productId].quantity >= productData[productId].stock) {
+            alert('Stock tidak mencukupi!');
+            return;
+        }
+        cart[productId].quantity++;
+    } else {
+        cart[productId] = {
+            id: productId,
+            name: productName,
+            price: price,
+            quantity: 1
+        };
+    }
+    
+    updateCartDisplay();
+}
+
+function updateCartDisplay() {
+    const cartItems = document.getElementById('cartItems');
+    
+    if (Object.keys(cart).length === 0) {
+        cartItems.innerHTML = `
+            <div class="text-center text-muted py-4">
+                <i class="fas fa-shopping-basket fa-3x mb-2"></i>
+                <p>Keranjang kosong</p>
+            </div>
+        `;
+    } else {
+        let html = '';
+        for (let id in cart) {
+            const item = cart[id];
+            html += `
+                <div class="cart-item">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>${item.name}</strong><br>
+                            <small>Rp ${item.price.toLocaleString('id-ID')} x ${item.quantity}</small>
+                        </div>
+                        <div>
+                            <div class="input-group input-group-sm" style="width: 120px;">
+                                <button class="btn btn-outline-secondary" onclick="decreaseQuantity(${id})">-</button>
+                                <input type="number" class="form-control text-center" value="${item.quantity}" 
+                                       onchange="updateQuantity(${id}, this.value)" min="1" max="${productData[id].stock}">
+                                <button class="btn btn-outline-secondary" onclick="increaseQuantity(${id})">+</button>
+                            </div>
+                            <button class="btn btn-sm btn-danger mt-1 w-100" onclick="removeFromCart(${id})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        cartItems.innerHTML = html;
+    }
+    
+    updateTotals();
+}
+
+function updateQuantity(productId, newQuantity) {
+    newQuantity = parseInt(newQuantity);
+    if (newQuantity <= 0) {
+        removeFromCart(productId);
+    } else if (newQuantity <= productData[productId].stock) {
+        cart[productId].quantity = newQuantity;
+        updateCartDisplay();
+    } else {
+        alert('Stock tidak mencukupi!');
+        updateCartDisplay();
+    }
+}
+
+function increaseQuantity(productId) {
+    if (cart[productId].quantity < productData[productId].stock) {
+        cart[productId].quantity++;
+        updateCartDisplay();
+    } else {
+        alert('Stock tidak mencukupi!');
+    }
+}
+
+function decreaseQuantity(productId) {
+    if (cart[productId].quantity > 1) {
+        cart[productId].quantity--;
+    } else {
+        removeFromCart(productId);
+    }
+    updateCartDisplay();
+}
+
+function removeFromCart(productId) {
+    delete cart[productId];
+    updateCartDisplay();
+}
+
+function updateTotals() {
+    let subtotal = 0;
+    for (let id in cart) {
+        subtotal += cart[id].price * cart[id].quantity;
+    }
+    
+    const discount = parseFloat(document.getElementById('discount').value) || 0;
+    const discountAmount = subtotal * (discount / 100);
+    const afterDiscount = subtotal - discountAmount;
+    const tax = afterDiscount * 0.11;
+    const total = afterDiscount + tax;
+    
+    document.getElementById('subtotal').textContent = 'Rp ' + subtotal.toLocaleString('id-ID');
+    document.getElementById('tax').textContent = 'Rp ' + Math.round(tax).toLocaleString('id-ID');
+    document.getElementById('total').textContent = 'Rp ' + Math.round(total).toLocaleString('id-ID');
+    
+    calculateChange();
+}
+
+function calculateChange() {
+    const total = parseFloat(document.getElementById('total').textContent.replace(/[^0-9]/g, ''));
+    const received = parseFloat(document.getElementById('cashReceived').value) || 0;
+    const change = received - total;
+    
+    document.getElementById('change').textContent = 'Rp ' + Math.max(0, change).toLocaleString('id-ID');
+}
+
+function processTransaction() {
+    if (Object.keys(cart).length === 0) {
+        alert('Keranjang kosong!');
+        return;
+    }
+    
+    const customerId = document.getElementById('customerSelect').value;
+    const paymentMethod = document.querySelector('input[name="payment"]:checked').value;
+    
+    // Validate cash payment
+    if (paymentMethod === 'cash') {
+        const total = parseFloat(document.getElementById('total').textContent.replace(/[^0-9]/g, ''));
+        const received = parseFloat(document.getElementById('cashReceived').value) || 0;
+        
+        if (received < total) {
+            alert('Uang yang diterima kurang!');
+            return;
+        }
+    }
+    
+    // Create transaction data
+    const transactionData = {
+        customer_id: customerId,
+        items: cart,
+        payment_method: paymentMethod,
+        discount: document.getElementById('discount').value,
+        total: document.getElementById('total').textContent
+    };
+    
+    // Send to server (implement AJAX)
+    console.log('Processing transaction:', transactionData);
+    
+    // Show success message
+    alert('Transaksi berhasil diproses!');
+    
+    // Reset cart
+    resetTransaction();
+}
+
+function resetTransaction() {
+    cart = {};
+    updateCartDisplay();
+    document.getElementById('customerSelect').value = '';
+    document.getElementById('discount').value = 0;
+    document.getElementById('cashReceived').value = '';
+    document.getElementById('cash').checked = true;
+}
+
+function searchProducts(query) {
+    // Implement product search
+    console.log('Searching for:', query);
+}
+
+function filterCategory(category) {
+    const products = document.querySelectorAll('.product-item');
+    
+    products.forEach(product => {
+        if (category === 'all' || product.dataset.category === category) {
+            product.style.display = 'block';
+        } else {
+            product.style.display = 'none';
+        }
+    });
+    
+    // Update active button
+    document.querySelectorAll('.btn-group .btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    event.target.classList.add('active');
+}
+
+function addNewCustomer() {
+    new bootstrap.Modal(document.getElementById('newCustomerModal')).show();
+}
+
+function saveNewCustomer() {
+    // Implement save new customer
+    console.log('Saving new customer...');
+}
+
+function holdTransaction() {
+    // Implement hold transaction
+    console.log('Holding transaction...');
+}
+
+function printReceipt() {
+    // Implement print receipt
+    window.print();
+}
+
+function scanBarcode() {
+    // Implement barcode scanning
+    alert('Fitur scan barcode akan segera tersedia');
+}
+
+// Toggle payment methods
+document.querySelectorAll('input[name="payment"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        if (this.value === 'cash') {
+            document.getElementById('cashPayment').style.display = 'block';
+        } else {
+            document.getElementById('cashPayment').style.display = 'none';
+        }
+    });
+});
+</script>
+{% endblock %}

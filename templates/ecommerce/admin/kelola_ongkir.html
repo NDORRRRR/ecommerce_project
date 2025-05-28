@@ -1,0 +1,285 @@
+{% extends 'base.html' %}
+
+{% block title %}Kelola Ongkir - Admin{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-money-bill-wave"></i> Kelola Ongkos Kirim</h2>
+    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addOngkirModal">
+        <i class="fas fa-plus"></i> Tambah Aturan Ongkir
+    </button>
+</div>
+
+<!-- Summary Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card border-primary">
+            <div class="card-body text-center">
+                <h5 class="card-title">Total Ekspedisi</h5>
+                <h2 class="text-primary">9</h2>
+                <small class="text-muted">Partner Pengiriman</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-success">
+            <div class="card-body text-center">
+                <h5 class="card-title">Rata-rata Ongkir</h5>
+                <h2 class="text-success">Rp 9,500</h2>
+                <small class="text-muted">Per Kilogram</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-info">
+            <div class="card-body text-center">
+                <h5 class="card-title">Total Pengiriman</h5>
+                <h2 class="text-info">{{ pengiriman_list.count }}</h2>
+                <small class="text-muted">Semua Status</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-warning">
+            <div class="card-body text-center">
+                <h5 class="card-title">Revenue Ongkir</h5>
+                <h2 class="text-warning">Rp 0</h2>
+                <small class="text-muted">Bulan Ini</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabel Tarif Ongkir -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-table"></i> Tarif Ongkir Per Ekspedisi</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Ekspedisi</th>
+                        <th>Tarif Dasar (1kg)</th>
+                        <th>Tarif Per Kg Tambahan</th>
+                        <th>Estimasi Hari</th>
+                        <th>Layanan</th>
+                        <th>Status</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="badge bg-primary">JNE</span></td>
+                        <td>Rp 9,000</td>
+                        <td>Rp 4,500</td>
+                        <td>1-3 hari</td>
+                        <td>Regular</td>
+                        <td><span class="badge bg-success">Aktif</span></td>
+                        <td>
+                            <button class="btn btn-sm btn-primary" onclick="editTarif('jne')">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge bg-danger">Pos Indonesia</span></td>
+                        <td>Rp 8,000</td>
+                        <td>Rp 4,000</td>
+                        <td>2-4 hari</td>
+                        <td>Regular</td>
+                        <td><span class="badge bg-success">Aktif</span></td>
+                        <td>
+                            <button class="btn btn-sm btn-primary" onclick="editTarif('pos')">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge bg-info">TIKI</span></td>
+                        <td>Rp 9,500</td>
+                        <td>Rp 4,750</td>
+                        <td>1-3 hari</td>
+                        <td>Regular</td>
+                        <td><span class="badge bg-success">Aktif</span></td>
+                        <td>
+                            <button class="btn btn-sm btn-primary" onclick="editTarif('tiki')">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge bg-warning">J&T Express</span></td>
+                        <td>Rp 8,500</td>
+                        <td>Rp 4,250</td>
+                        <td>1-3 hari</td>
+                        <td>Regular</td>
+                        <td><span class="badge bg-success">Aktif</span></td>
+                        <td>
+                            <button class="btn btn-sm btn-primary" onclick="editTarif('j&t')">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge bg-success">SiCepat</span></td>
+                        <td>Rp 8,000</td>
+                        <td>Rp 4,000</td>
+                        <td>1-2 hari</td>
+                        <td>Regular</td>
+                        <td><span class="badge bg-success">Aktif</span></td>
+                        <td>
+                            <button class="btn btn-sm btn-primary" onclick="editTarif('sicepat')">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge bg-dark">GoSend</span></td>
+                        <td>Rp 15,000</td>
+                        <td>Rp 7,500</td>
+                        <td>Same Day</td>
+                        <td>Express</td>
+                        <td><span class="badge bg-success">Aktif</span></td>
+                        <td>
+                            <button class="btn btn-sm btn-primary" onclick="editTarif('gosend')">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Pengiriman Terbaru -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-shipping-fast"></i> Pengiriman Terbaru</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Ekspedisi</th>
+                        <th>Alamat Tujuan</th>
+                        <th>Ongkir</th>
+                        <th>Status</th>
+                        <th>Tanggal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pengiriman in pengiriman_list|slice:":10" %}
+                        <tr>
+                            <td>#{{ pengiriman.id }}</td>
+                            <td><span class="badge bg-primary">{{ pengiriman.get_ekspedisi_display }}</span></td>
+                            <td>{{ pengiriman.alamat_penerima|truncatechars:40 }}</td>
+                            <td>Rp {{ pengiriman.ongkir|floatformat:0 }}</td>
+                            <td>
+                                <span class="badge bg-{{ pengiriman.get_status_badge_color }}">
+                                    {{ pengiriman.tampilkanstatus }}
+                                </span>
+                            </td>
+                            <td>{{ pengiriman.created_at|date:"d M Y" }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center">Belum ada data pengiriman</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Edit Tarif -->
+<div class="modal fade" id="editTarifModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Tarif Ongkir</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{% url 'kelola_ongkir' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <input type="hidden" name="action" value="update_tarif">
+                    <input type="hidden" name="ekspedisi" id="edit-ekspedisi">
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Ekspedisi</label>
+                        <input type="text" class="form-control" id="edit-ekspedisi-name" readonly>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Tarif Dasar (1kg)</label>
+                        <div class="input-group">
+                            <span class="input-group-text">Rp</span>
+                            <input type="number" class="form-control" name="tarif_dasar" id="edit-tarif-dasar" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Tarif Per Kg Tambahan</label>
+                        <div class="input-group">
+                            <span class="input-group-text">Rp</span>
+                            <input type="number" class="form-control" name="tarif_tambahan" id="edit-tarif-tambahan" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Estimasi Hari</label>
+                        <input type="text" class="form-control" name="estimasi" id="edit-estimasi" placeholder="Contoh: 1-3 hari">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Status</label>
+                        <select class="form-control" name="status">
+                            <option value="aktif">Aktif</option>
+                            <option value="nonaktif">Non-Aktif</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Data tarif ekspedisi
+const tarifData = {
+    'jne': { nama: 'JNE', dasar: 9000, tambahan: 4500, estimasi: '1-3 hari' },
+    'pos': { nama: 'Pos Indonesia', dasar: 8000, tambahan: 4000, estimasi: '2-4 hari' },
+    'tiki': { nama: 'TIKI', dasar: 9500, tambahan: 4750, estimasi: '1-3 hari' },
+    'j&t': { nama: 'J&T Express', dasar: 8500, tambahan: 4250, estimasi: '1-3 hari' },
+    'sicepat': { nama: 'SiCepat', dasar: 8000, tambahan: 4000, estimasi: '1-2 hari' },
+    'gosend': { nama: 'GoSend', dasar: 15000, tambahan: 7500, estimasi: 'Same Day' }
+};
+
+function editTarif(ekspedisi) {
+    const data = tarifData[ekspedisi];
+    document.getElementById('edit-ekspedisi').value = ekspedisi;
+    document.getElementById('edit-ekspedisi-name').value = data.nama;
+    document.getElementById('edit-tarif-dasar').value = data.dasar;
+    document.getElementById('edit-tarif-tambahan').value = data.tambahan;
+    document.getElementById('edit-estimasi').value = data.estimasi;
+    
+    const modal = new bootstrap.Modal(document.getElementById('editTarifModal'));
+    modal.show();
+}
+
+// Chart untuk visualisasi
+document.addEventListener('DOMContentLoaded', function() {
+    // Bisa tambahkan chart.js untuk visualisasi data ongkir
+});
+</script>
+{% endblock %}

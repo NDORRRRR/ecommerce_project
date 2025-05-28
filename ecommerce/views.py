@@ -2,10 +2,12 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+import JsonResponse
 from django.http import JsonResponse
 from django.core.paginator import Paginator
-from django.db.models import Q
+from django.db.models import Sum, Count, Avg, F, Q
 from django.utils import timezone
+from datetime import datetime, timedelta
 from .models import *
 from .forms import *
 import random
@@ -246,21 +248,103 @@ def mengelola_data_ongkir(request):
     return render(request, 'ecommerce/admin/kelola_ongkir.html', {'pengiriman_list': pengiriman_list})
 
 def melihat_data_pengiriman(request):
-    """Melihat data pengiriman"""
     if not request.user.is_staff:
         messages.error(request, 'Akses ditolak!')
         return redirect('home')
     
-    pengiriman_list = Pengiriman.objects.all()
+    pengiriman_list = Pengiriman.objects.all().select_related('transaksi', 'transaksi_buyer_user')
+
+    status_filter = request.GET.get('status')
+    if status_filter:
+        pengiriman_list = pengiriman_list.filter(status=status_filter)
+
+    ekspedisi_filter = request.GET.get('ekspedisi')
+    if ekspedisi_filter:
+        pengiriman_list = pengiriman_list.filter(ekspedisi=ekspedisi_filter)
+
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_gate')
+    if start_gate and end_gate:
+        pengiriman_list = pengiriman_list.filter(
+            created_at__date__range=[start_date, end_gate]
+        )
+
+    stats = {
+    'pending': pengiriman_list.filter(status='pending').count(),
+    'processing': pengiriman_list.filter(status='processing').count(),
+    'shipped': pengiriman_list.filter(status='shipped').count(),
+    'in_transit': pengiriman_list.filter(status='in_transit').count(),
+    'delivered': pengiriman_list.filter(status='delivered').count(),
+    'failed': pengiriman_list.filter(status='failed').count(),
+    }
+#LANJUT BOSS
+    for pengiriman in pengiriman_list:
+        if pengiriman.tanggal_kirim and pengiriman.tanggal_terkirim:
+            delta = pengiriman.tanggal_terkirim - pengiriman.tanggal_kirim
+
     return render(request, 'ecommerce/admin/data_pengiriman.html', {'pengiriman_list': pengiriman_list})
 
 def mengelola_data_pelanggan(request):
-    """Mengelola data pelanggan"""
     if not request.user.is_staff:
         messages.error(request, 'Akses ditolak!')
         return redirect('home')
     
-    buyer_list = Buyer.objects.all()
+    buyer_list = Buyer.objects.all().select_related('user')
+
+    if request.method == 'post':
+        action = 'add_customer':
+
+        username = request.POST.get('username')
+        nama = request.POST.get('nama')
+        email = request.POST.get('email')
+        noHP = request.POST.get('noHP')
+        alamat = request.POST.get('alamat')
+        password = request.POST.get('password')
+
+        try:
+            user = User.objects.create_user(
+                username=username,
+                nama=nama,
+                email=email,
+                noHP=noHP,
+                alamat=alamat,
+                password=password,
+                )
+            Buyer.objects.create(user=user)
+            messages.success(request, f'Pelanggan {nama} berhasil ditambahkan!')
+        except Exception as e:
+            messages.error(request, f'Error: {str(e)}')
+
+        return redirect('kelola_pelanggan')
+
+active_buyers = Transaksi.objects.filter(
+    tanggal_date__gte=timezone.now() - timedelta(days=30)
+).values('buyer').distinct().count()
+
+new_buyers = Buyer.objects.filter(
+    user__date_joined__gte=timezone.now() - timedelta(days=7)
+).count()
+
+avg_transactions = Transaksi.objects.values('buyer').annotate(
+    count=Count('id')
+).aggregate(avg=Avg('count'))['avg'] or 0
+
+for buyer in buyer_list:
+    buyer.get_total_purchases = Transaksi.objects.filter(
+        buyer=buyer, status__in=['completed', 'shipped']
+    ).aggregate(total=Sum('total_double'))['total'] or 0
+    buyer.is_active = Transaksi.objects.filter(
+        buyer=buyer,
+        tanggal_date__gte=timezone.now() - timedelta(days=30)
+    ).exist()
+
+context = {
+    'buyer_list': buyer_list,
+    'active_buyers': active_buyers,
+    'new_buyers': new_buyers,
+    'avg_transactions': int(avg_transactions)
+}
+
     return render(request, 'ecommerce/admin/kelola_pelanggan.html', {'buyer_list': buyer_list})
 
 def melakukan_transaksi_langsung(request):
@@ -325,16 +409,17 @@ def calculate_ongkir(berat_kg, ekspedisi):
 
 @login_required
 def detail_pengiriman(request, transaksi_id):
-    buyer, created = Buyer.objects_or_404(Transaksi, id=transaksi_id, buyer=buyer)
+    buyer, created = Buyer.objects.get_or_create(user=request.user)
+    transaksi = get_object_or_404(Transaksi, id=transaksi_id, buyer=buyer)
 
     if not transaksi.pengiriman:
-        messages.error(request, 'Data pengiriman tidak ditemukan!.')
+        messages.error(request, 'Data pengiriman tidak ditemukan!')
         return redirect('detail_transaksi', transaksi_id=transaksi.id)
 
     return render(request, 'ecommerce/detail_pengiriman.html', {
         'transaksi': transaksi,
         'pengiriman': transaksi.pengiriman
-        })
+    })
 
 @login_required
 def track_pengiriman(request, transaksi_id):
