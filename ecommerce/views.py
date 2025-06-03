@@ -9,6 +9,7 @@ from django.utils import timezone
 from datetime import datetime, timedelta
 from .models import *
 from .forms import *
+from decimal import Decimal
 import random
 import string
 
@@ -121,7 +122,7 @@ def buat_transaksi(request):
         
         if produk.stock >= quantity:
             total_berat = produk.berat * quantity
-            ongkir = calculate_ongkir(total_berat, ekspedisi)
+            ongkir = calculate_ongkir(total_berat, ekspedisi) #error
 
             pengiriman = Pengiriman.objects.create(
                 alamat_penerima=request.user.alamat,
@@ -402,7 +403,7 @@ def calculate_ongkir(berat_kg, ekspedisi):
     if berat_kg <=1:
         return base_rate
     else:
-        additional_cost = (berat_kg - 1) * (base_rate * 0.5)
+        additional_cost = (berat_kg - 1) * (base_rate * Decimal('0.5')) #error
         return base_rate + additional_cost
 
 @login_required
