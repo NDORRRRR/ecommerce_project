@@ -1,0 +1,198 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Checkout - Kopag Ecommerce{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="fas fa-cash-register me-2"></i>Checkout Pesanan</h4>
+            </div>
+            <div class="card-body">
+                {% if cart_items %}
+                    <h5 class="mb-3">Item dalam Pesanan:</h5>
+                    <ul class="list-group mb-4">
+                        {% for item in cart_items %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center">
+                                {% if item.produk.gambar %}
+                                    <img src="{{ item.produk.gambar.url }}" alt="{{ item.produk.nama }}" class="rounded me-3" style="width: 50px; height: 50px; object-fit: cover;">
+                                {% else %}
+                                    <img src="{% static 'ecommerce/img/default_product.png' %}" alt="No Image" class="rounded me-3" style="width: 50px; height: 50px; object-fit: cover;">
+                                {% endif %}
+                                <div>
+                                    {{ item.produk.nama }} <span class="badge bg-info">{{ item.quantity }}x</span>
+                                </div>
+                            </div>
+                            <span class="fw-bold">Rp {{ item.get_subtotal|floatformat:0 }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+
+                    <form method="POST" id="checkoutForm">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="alamat_pengiriman" class="form-label">
+                                <i class="fas fa-map-marker-alt me-1"></i> Alamat Pengiriman
+                            </label>
+                            <textarea name="alamat_pengiriman" id="alamat_pengiriman" class="form-control" rows="3" required>{{ user.alamat }}</textarea>
+                            <div class="form-text">Pastikan alamat Anda lengkap dan benar.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">
+                                <i class="fas fa-truck me-1"></i> Pilih Ekspedisi Pengiriman
+                            </label>
+                            <div class="ekspedisi-options">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="ekspedisi" id="jne" value="jne" onchange="calculateShippingCost()" checked>
+                                    <label class="form-check-label" for="jne">
+                                        <div class="d-flex justify-content-between">
+                                            <span><strong>JNE</strong> (1-3 hari)</span>
+                                            <span class="text-primary">Rp <span id="jne-price">9,000</span></span>
+                                        </div>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="ekspedisi" id="pos" value="pos" onchange="calculateShippingCost()">
+                                    <label class="form-check-label" for="pos">
+                                        <div class="d-flex justify-content-between">
+                                            <span><strong>Pos Indonesia</strong> (2-4 hari)</span>
+                                            <span class="text-primary">Rp <span id="pos-price">8,000</span></span>
+                                        </div>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="ekspedisi" id="sicepat" value="sicepat" onchange="calculateShippingCost()">
+                                    <label class="form-check-label" for="sicepat">
+                                        <div class="d-flex justify-content-between">
+                                            <span><strong>SiCepat</strong> (1-2 hari)</span>
+                                            <span class="text-primary">Rp <span id="sicepat-price">8,000</span></span>
+                                        </div>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="ekspedisi" id="gosend" value="gosend" onchange="calculateShippingCost()">
+                                    <label class="form-check-label" for="gosend">
+                                        <div class="d-flex justify-content-between">
+                                            <span><strong>GoSend</strong> (Same Day)</span>
+                                            <span class="text-primary">Rp <span id="gosend-price">15,000</span></span>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="catatan" class="form-label">
+                                <i class="fas fa-sticky-note me-1"></i> Catatan untuk Kurir (Opsional)
+                            </label>
+                            <textarea name="catatan" id="catatan" class="form-control" rows="2" placeholder="Contoh: Titip ke tetangga jika tidak ada di rumah."></textarea>
+                        </div>
+
+                        <div class="card bg-light mb-4">
+                            <div class="card-body">
+                                <h5 class="card-title"><i class="fas fa-calculator me-1"></i> Ringkasan Pembayaran</h5>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Total Harga Produk:</span>
+                                    <span>Rp <span id="product-subtotal">{{ total_price|floatformat:0 }}</span></span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Ongkos Kirim:</span>
+                                    <span>Rp <span id="shipping-cost">{{ initial_ongkir|floatformat:0 }}</span></span>
+                                </div>
+                                <hr>
+                                <div class="d-flex justify-content-between fw-bold fs-5">
+                                    <span>Total Pembayaran:</span>
+                                    <span class="text-success">Rp <span id="grand-total">{{ total_price|add:initial_ongkir|floatformat:0 }}</span></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-success btn-lg w-100">
+                            <i class="fas fa-check-circle me-2"></i> Bayar Sekarang
+                        </button>
+                    </form>
+
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-shopping-basket fa-5x text-muted mb-3"></i>
+                        <h4>Keranjang Anda Kosong</h4>
+                        <p class="text-muted">Tidak ada item untuk di-checkout.</p>
+                        <a href="{% url 'home' %}" class="btn btn-primary mt-3">
+                            <i class="fas fa-shopping-bag me-2"></i> Mulai Belanja
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.ekspedisi-options .form-check {
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #dee2e6;
+    border-radius: 5px;
+    transition: all 0.2s;
+}
+
+.ekspedisi-options .form-check:hover {
+    background-color: #f8f9fa;
+    border-color: #007bff;
+}
+
+.ekspedisi-options .form-check-input:checked + .form-check-label {
+    color: #007bff;
+    font-weight: 500;
+}
+</style>
+
+<script>
+    const produkTotalHarga = parseFloat("{{ total_price|floatformat:0 }}".replace(/\./g, '').replace(/,/g, ''));
+    const totalBeratProduk = parseFloat("{{ cart.get_total_berat|floatformat:1 }}"); // Anda perlu mengimplementasikan method ini di model Cart
+
+    // Shipping rates per kg (sesuai yang ada di views.py Anda)
+    const shippingRates = {
+        'jne': 9000,
+        'pos': 8000,
+        'tiki': 9500,
+        'j&t': 8500,
+        'sicepat': 7900,
+        'anteraja': 7500,
+        'ninja': 7000,
+        'gosend': 17000,
+        'grab': 12000
+    };
+
+    function calculateShippingCost() {
+        const selectedEkspedisi = document.querySelector('input[name="ekspedisi"]:checked').value;
+        let ongkir = shippingRates[selectedEkspedisi];
+
+        // Hitung biaya tambahan untuk berat di atas 1kg
+        if (totalBeratProduk > 1) {
+            const additionalWeight = totalBeratProduk - 1;
+            ongkir += (additionalWeight * ongkir * 0.5); // Ini harus konsisten dengan calculate_ongkir di views.py
+        }
+        
+        document.getElementById('shipping-cost').textContent = Math.round(ongkir).toLocaleString('id-ID');
+        updateGrandTotal();
+    }
+
+    function updateGrandTotal() {
+        const shippingCostText = document.getElementById('shipping-cost').textContent.replace(/[^0-9]/g, '');
+        const currentShippingCost = parseFloat(shippingCostText);
+        
+        const grandTotal = produkTotalHarga + currentShippingCost;
+        document.getElementById('grand-total').textContent = Math.round(grandTotal).toLocaleString('id-ID');
+    }
+
+    // Inisialisasi perhitungan saat halaman dimuat
+    document.addEventListener('DOMContentLoaded', function() {
+        calculateShippingCost();
+    });
+</script>
+{% endblock %}

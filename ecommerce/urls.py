@@ -1,3 +1,4 @@
+# ecommerce/urls.py
 from django.urls import path
 from . import views
 
@@ -13,10 +14,16 @@ urlpatterns = [
     
     # User pages
     path('profile/', views.profile, name='profile'),
-    path('transaksi/buat/', views.buat_transaksi, name='buat_transaksi'),
+    # path('transaksi/buat/', views.buat_transaksi, name='buat_transaksi'), # Bisa dihapus/diadaptasi
     path('transaksi/riwayat/', views.riwayat_transaksi, name='riwayat_transaksi'),
     path('transaksi/<int:transaksi_id>/', views.detail_transaksi, name='detail_transaksi'),
     path('transaksi/<int:transaksi_id>/konfirmasi/', views.konfirmasi_pembayaran, name='konfirmasi_pembayaran'),
+    
+    # Keranjang Belanja & Checkout
+    path('cart/', views.cart_detail, name='cart_detail'),
+    path('cart/add/<int:produk_id>/', views.add_to_cart, name='add_to_cart'),
+    path('cart/update/<int:item_id>/', views.update_cart_item, name='update_cart_item'),
+    path('checkout/', views.checkout, name='checkout'),
     
     # Pengiriman URLs
     path('pengiriman/<int:transaksi_id>/', views.detail_pengiriman, name='detail_pengiriman'),

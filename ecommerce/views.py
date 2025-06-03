@@ -106,6 +106,196 @@ def produk_detail(request, produk_id):
     return render(request, 'ecommerce/produk_detail.html', {'produk': produk})
 
 @login_required
+def add_to_cart(request, produk_id):
+    produk = get_object_or_404(Produk, id=produk_id)
+    quantity = int(request.POST.get('quantity', 1))
+
+    # Pastikan pembeli memiliki objek Buyer
+    buyer, created_buyer = Buyer.objects.get_or_create(user=request.user)
+
+    cart, created_cart = Cart.objects.get_or_create(user=request.user)
+
+    if produk.stock < quantity:
+        messages.error(request, f'Stok {produk.nama} tidak mencukupi. Tersedia: {produk.stock}.')
+        return redirect('produk_detail', produk_id=produk.id)
+
+    cart_item, created_item = CartItem.objects.get_or_create(
+        cart=cart,
+        produk=produk,
+        defaults={'quantity': quantity}
+    )
+
+    if not created_item:
+        # Jika item sudah ada di keranjang, tambahkan kuantitasnya
+        new_quantity = cart_item.quantity + quantity
+        if produk.stock < new_quantity:
+            messages.error(request, f'Tidak bisa menambahkan lebih banyak {produk.nama}. Stok tidak cukup untuk kuantitas yang diminta.')
+        else:
+            cart_item.quantity = new_quantity
+            cart_item.save()
+            messages.success(request, f'{quantity} {produk.nama} ditambahkan ke keranjang.')
+    else:
+        messages.success(request, f'{produk.nama} berhasil ditambahkan ke keranjang.')
+
+    return redirect('cart_detail') # Arahkan ke halaman detail keranjang
+
+@login_required
+def cart_detail(request):
+    buyer, created_buyer = Buyer.objects.get_or_create(user=request.user)
+    cart, created_cart = Cart.objects.get_or_create(user=request.user)
+    cart_items = CartItem.objects.filter(cart=cart).select_related('produk')
+
+    total_price = cart.get_total_price()
+    total_items = cart.get_total_items()
+
+    context = {
+        'cart': cart,
+        'cart_items': cart_items,
+        'total_price': total_price,
+        'total_items': total_items,
+    }
+    return render(request, 'ecommerce/cart_detail.html', context)
+
+@login_required
+def update_cart_item(request, item_id):
+    cart_item = get_object_or_404(CartItem, id=item_id, cart__user=request.user)
+    action = request.POST.get('action') # 'increase', 'decrease', 'remove', 'set_quantity'
+    new_quantity = int(request.POST.get('quantity', cart_item.quantity))
+
+    if action == 'remove':
+        cart_item.delete()
+        messages.success(request, f'{cart_item.produk.nama} berhasil dihapus dari keranjang.')
+    elif action == 'set_quantity':
+        if new_quantity <= 0:
+            cart_item.delete()
+            messages.success(request, f'{cart_item.produk.nama} berhasil dihapus dari keranjang.')
+        elif new_quantity > cart_item.produk.stock:
+            messages.error(request, f'Stok {cart_item.produk.nama} tidak mencukupi untuk kuantitas {new_quantity}. Tersedia: {cart_item.produk.stock}.')
+        else:
+            cart_item.quantity = new_quantity
+            cart_item.save()
+            messages.success(request, f'Kuantitas {cart_item.produk.nama} diperbarui menjadi {new_quantity}.')
+    elif action == 'increase':
+        if cart_item.quantity + 1 > cart_item.produk.stock:
+            messages.error(request, f'Stok {cart_item.produk.nama} tidak mencukupi. Tersedia: {cart_item.produk.stock}.')
+        else:
+            cart_item.quantity += 1
+            cart_item.save()
+            messages.success(request, f'Kuantitas {cart_item.produk.nama} diperbarui.')
+    elif action == 'decrease':
+        if cart_item.quantity - 1 <= 0:
+            cart_item.delete()
+            messages.success(request, f'{cart_item.produk.nama} berhasil dihapus dari keranjang.')
+        else:
+            cart_item.quantity -= 1
+            cart_item.save()
+            messages.success(request, f'Kuantitas {cart_item.produk.nama} diperbarui.')
+
+    return redirect('cart_detail')
+
+@login_required
+def checkout(request):
+    cart = get_object_or_404(Cart, user=request.user)
+    cart_items = CartItem.objects.filter(cart=cart).select_related('produk')
+
+    if not cart_items.exists():
+        messages.warning(request, 'Keranjang belanja Anda kosong.')
+        return redirect('cart_detail')
+
+    if request.method == 'POST':
+        # Proses checkout:
+        # 1. Validasi stok untuk setiap item di keranjang
+        # 2. Hitung total berat dan ongkir
+        # 3. Buat objek Pengiriman
+        # 4. Buat objek Transaksi
+        # 5. Pindahkan item dari CartItem ke TransaksiProduk
+        # 6. Kurangi stok produk
+        # 7. Hapus item dari keranjang
+        # 8. Redirect ke halaman detail transaksi atau riwayat transaksi
+
+        ekspedisi = request.POST.get('ekspedisi', 'jne')
+        alamat_pengiriman = request.POST.get('alamat_pengiriman', request.user.alamat) # Gunakan alamat user default
+        catatan = request.POST.get('catatan', '')
+
+        total_berat_kg = Decimal(0)
+        total_produk_price = Decimal(0)
+        
+        items_to_process = []
+        for item in cart_items:
+            if item.quantity > item.produk.stock:
+                messages.error(request, f'Stok {item.produk.nama} tidak cukup ({item.produk.stock} tersedia). Mohon sesuaikan kuantitas di keranjang.')
+                return redirect('cart_detail')
+            total_berat_kg += item.produk.berat * item.quantity
+            total_produk_price += item.produk.harga * item.quantity
+            items_to_process.append(item)
+
+        ongkir = calculate_ongkir(total_berat_kg, ekspedisi)
+        grand_total = total_produk_price + ongkir
+
+        try:
+            # Buat objek Pengiriman
+            pengiriman = Pengiriman.objects.create(
+                alamat_penerima=alamat_pengiriman,
+                ongkir=ongkir,
+                ekspedisi=ekspedisi,
+                status='pending',
+                catatan=catatan
+            )
+
+            # Buat objek Transaksi
+            transaksi = Transaksi.objects.create(
+                buyer=request.user.buyer, # Pastikan user memiliki buyer profile
+                pembeli=request.user.nama,
+                status='pending', # Atau 'paid' jika ini adalah transaksi langsung yang sudah dibayar
+                total_double=grand_total,
+                pengiriman=pengiriman
+            )
+
+            # Pindahkan item dari CartItem ke TransaksiProduk
+            for item in items_to_process:
+                TransaksiProduk.objects.create(
+                    transaksi=transaksi,
+                    produk=item.produk,
+                    quantity=item.quantity,
+                    harga_satuan=item.produk.harga
+                )
+                # Kurangi stok produk
+                item.produk.stock -= item.quantity
+                item.produk.save()
+
+            # Hapus item dari keranjang setelah berhasil checkout
+            cart_items.all().delete()
+
+            messages.success(request, 'Checkout berhasil! Transaksi Anda sedang diproses.')
+            return redirect('detail_transaksi', transaksi_id=transaksi.id)
+
+        except Exception as e:
+            messages.error(request, f'Terjadi kesalahan saat checkout: {e}.')
+            return redirect('cart_detail')
+
+    else:
+        # Untuk metode GET, tampilkan halaman checkout
+        # Hitung ongkir awal berdasarkan alamat default user dan JNE
+        initial_ongkir = calculate_ongkir(cart.get_total_berat(), 'jne')
+        
+        # Inisialisasi form checkout
+        form = CheckoutForm(initial={
+            'alamat_pengiriman': request.user.alamat,
+            'ekspedisi': 'jne' # Default ekspedisi
+        })
+
+        context = {
+            'cart': cart,
+            'cart_items': cart_items,
+            'total_price': cart.get_total_price(),
+            'initial_ongkir': initial_ongkir,
+            'form': form,
+        }
+        return render(request, 'ecommerce/checkout.html', context)
+
+
+
+@login_required
 def buat_transaksi(request):
     """Membuat transaksi baru"""
     if request.method == 'POST':

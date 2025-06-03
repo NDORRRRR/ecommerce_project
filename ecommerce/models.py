@@ -200,3 +200,35 @@ class TransaksiProduk(models.Model):
     
     class Meta:
         unique_together = ('transaksi', 'produk')
+
+# Untuk model dari keranjangnya
+class Cart(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Cart of {self.user.username}"
+
+    def get_total_items(self):
+        return self.cartitem_set.aggregate(total_qty=models.Sum('quantity'))['total_qty'] or 0
+
+    def get_total_price(self):
+        total = Decimal(0)
+        for item in self.cartitem_set.all():
+            total += item.get_subtotal()
+        return total
+
+class CartItem(models.Model):
+    cart = models.ForeignKey(Cart, on_delete=models.CASCADE)
+    produk = models.ForeignKey(Produk, on_delete=models.CASCADE)
+    quantity = models.IntegerField(default=1, validators=[MinValueValidator(1)])
+
+    class Meta:
+        unique_together = ('cart', 'produk') # Pastikan satu produk hanya ada sekali di satu keranjang
+
+    def __str__(self):
+        return f"{self.quantity} x {self.produk.nama} in {self.cart.user.username}'s cart"
+
+    def get_subtotal(self):
+        return self.produk.harga * self.quantityy
