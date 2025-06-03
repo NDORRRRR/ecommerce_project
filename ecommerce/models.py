@@ -1,4 +1,3 @@
-# models.py - UPDATED dengan integrasi pengiriman
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import MinValueValidator
@@ -56,6 +55,7 @@ class Produk(models.Model):
     harga = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal('0.01'))])
     stock = models.IntegerField(validators=[MinValueValidator(0)])
     berat = models.DecimalField(max_digits=8, decimal_places=2, default=1.0, help_text="Berat dalam kg")  # NEW
+    gambar = models.ImageField(upload_to='produk_images/', blank=True, null=True) # TAMBAHKAN BARIS INI
     
     def updatestock(self):
         # Method untuk update stock
