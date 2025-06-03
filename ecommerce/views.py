@@ -18,7 +18,7 @@ def home(request):
     produk_list = Produk.objects.all()
     kategori_list = Produk.objects.values_list('kategori', flat=True).distinct()
     
-    # Filter berdasarkan kategori
+    # Filter berdasarkan kategori (ini akan tetap berfungsi jika parameter kategori dikirim)
     kategori = request.GET.get('kategori')
     if kategori:
         produk_list = produk_list.filter(kategori=kategori)
@@ -30,17 +30,18 @@ def home(request):
             Q(nama__icontains=search) | Q(kategori__icontains=search)
         )
     
-    paginator = Paginator(produk_list, 12)
+    paginator = Paginator(produk_list, 12) # Sesuaikan per halaman
     page_number = request.GET.get('page')
     produk_list = paginator.get_page(page_number)
     
     context = {
         'produk_list': produk_list,
-        'kategori_list': kategori_list,
+        'kategori_list': kategori_list, # Tetap sediakan jika mungkin digunakan di tempat lain
         'selected_kategori': kategori,
         'search_query': search
     }
     return render(request, 'ecommerce/home.html', context)
+
 
 def user_login(request):
     """Login view"""

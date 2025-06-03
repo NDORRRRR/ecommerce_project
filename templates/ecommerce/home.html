@@ -4,39 +4,12 @@
 
 {% block content %}
 <div class="row">
-    <div class="col-md-3">
-        <div class="card">
-            <div class="card-header">
-                <h5>Filter Produk</h5>
-            </div>
-            <div class="card-body">
-                <form method="GET">
-                    <div class="mb-3">
-                        <label for="search" class="form-label">Cari Produk</label>
-                        <input type="text" class="form-control" id="search" name="search" value="{{ search_query }}">
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="kategori" class="form-label">Kategori</label>
-                        <select class="form-control" id="kategori" name="kategori">
-                            <option value="">Semua Kategori</option>
-                            {% for kat in kategori_list %}
-                                <option value="{{ kat }}" {% if kat == selected_kategori %}selected{% endif %}>{{ kat }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    
-                    <button type="submit" class="btn btn-primary">Filter</button>
-                    <a href="{% url 'home' %}" class="btn btn-secondary">Reset</a>
-                </form>
-            </div>
-        </div>
-    </div>
+    {# BAGIAN FILTER PRODUK DIHAPUS SEPENUHNYA DARI SINI #}
     
-    <div class="col-md-9">
+    <div class="col-md-12"> {# UBAH INI DARI col-md-9 JADI col-md-12 #}
         <div class="row">
             {% for produk in produk_list %}
-                <div class="col-md-4 mb-4">
+                <div class="col-md-3 mb-4"> {# UBAH INI DARI col-md-4 JADI col-md-3 UNTUK MENJAGA GRID (4 produk per baris) #}
                     <div class="card product-card h-100">
                         {# Tambahkan ini untuk gambar produk #}
                         {% if produk.gambar %}
