@@ -2,8 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-import JsonResponse
-from django.http import JsonResponse
+from django.http import JsonResponse  # This is the correct import
 from django.core.paginator import Paginator
 from django.db.models import Sum, Count, Avg, F, Q
 from django.utils import timezone
@@ -291,9 +290,7 @@ def mengelola_data_pelanggan(request):
     
     buyer_list = Buyer.objects.all().select_related('user')
 
-    if request.method == 'post':
-        action = 'add_customer':
-
+    if request.method == 'POST':
         username = request.POST.get('username')
         nama = request.POST.get('nama')
         email = request.POST.get('email')
@@ -309,7 +306,7 @@ def mengelola_data_pelanggan(request):
                 noHP=noHP,
                 alamat=alamat,
                 password=password,
-                )
+            )
             Buyer.objects.create(user=user)
             messages.success(request, f'Pelanggan {nama} berhasil ditambahkan!')
         except Exception as e:
@@ -317,35 +314,36 @@ def mengelola_data_pelanggan(request):
 
         return redirect('kelola_pelanggan')
 
-active_buyers = Transaksi.objects.filter(
-    tanggal_date__gte=timezone.now() - timedelta(days=30)
-).values('buyer').distinct().count()
-
-new_buyers = Buyer.objects.filter(
-    user__date_joined__gte=timezone.now() - timedelta(days=7)
-).count()
-
-avg_transactions = Transaksi.objects.values('buyer').annotate(
-    count=Count('id')
-).aggregate(avg=Avg('count'))['avg'] or 0
-
-for buyer in buyer_list:
-    buyer.get_total_purchases = Transaksi.objects.filter(
-        buyer=buyer, status__in=['completed', 'shipped']
-    ).aggregate(total=Sum('total_double'))['total'] or 0
-    buyer.is_active = Transaksi.objects.filter(
-        buyer=buyer,
+    # Calculate statistics
+    active_buyers = Transaksi.objects.filter(
         tanggal_date__gte=timezone.now() - timedelta(days=30)
-    ).exist()
+    ).values('buyer').distinct().count()
 
-context = {
-    'buyer_list': buyer_list,
-    'active_buyers': active_buyers,
-    'new_buyers': new_buyers,
-    'avg_transactions': int(avg_transactions)
-}
+    new_buyers = Buyer.objects.filter(
+        user__date_joined__gte=timezone.now() - timedelta(days=7)
+    ).count()
 
-    return render(request, 'ecommerce/admin/kelola_pelanggan.html', {'buyer_list': buyer_list})
+    avg_transactions = Transaksi.objects.values('buyer').annotate(
+        count=Count('id')
+    ).aggregate(avg=Avg('count'))['avg'] or 0
+
+    for buyer in buyer_list:
+        buyer.get_total_purchases = Transaksi.objects.filter(
+            buyer=buyer, status__in=['completed', 'shipped']
+        ).aggregate(total=Sum('total_double'))['total'] or 0
+        buyer.is_active = Transaksi.objects.filter(
+            buyer=buyer,
+            tanggal_date__gte=timezone.now() - timedelta(days=30)
+        ).exists()
+
+    context = {
+        'buyer_list': buyer_list,
+        'active_buyers': active_buyers,
+        'new_buyers': new_buyers,
+        'avg_transactions': int(avg_transactions)
+    }
+
+    return render(request, 'ecommerce/admin/kelola_pelanggan.html', context)
 
 def melakukan_transaksi_langsung(request):
     """Melakukan transaksi langsung (admin)"""
@@ -480,6 +478,16 @@ def kelola_pengiriman(request):
     
     pengiriman_list = Pengiriman.objects.all().order_by('-created_at')
     
+    # Calculate status counts
+    status_counts = {
+        'pending': pengiriman_list.filter(status='pending').count(),
+        'processing': pengiriman_list.filter(status='processing').count(),
+        'shipped': pengiriman_list.filter(status='shipped').count(),
+        'delivered': pengiriman_list.filter(status='delivered').count(),
+        'in_transit': pengiriman_list.filter(status='in_transit').count(),
+        'failed': pengiriman_list.filter(status='failed').count(),
+    }
+    
     status_filter = request.GET.get('status')
     if status_filter:
         pengiriman_list = pengiriman_list.filter(status=status_filter)
@@ -497,7 +505,8 @@ def kelola_pengiriman(request):
         'status_choices': Pengiriman.STATUS_CHOICES,
         'ekspedisi_choices': Pengiriman.EKSPEDISI_CHOICES,
         'selected_status': status_filter,
-        'selected_ekspedisi': ekspedisi_filter
+        'selected_ekspedisi': ekspedisi_filter,
+        'status_counts': status_counts,  # Add this line
     })
 
 def update_status_pengiriman(request, pengiriman_id):

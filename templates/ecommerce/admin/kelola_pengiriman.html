@@ -34,7 +34,7 @@
             <div class="card-body text-center">
                 <h5 class="card-title">Pending</h5>
                 <h2 class="text-secondary">
-                    {{ pengiriman_list|dictsort:"status"|selectattr:"status":"equalto":"pending"|list|length|default:"0" }}
+                    {{ status_counts.pending|default:"0" }}
                 </h2>
             </div>
         </div>
@@ -44,7 +44,7 @@
             <div class="card-body text-center">
                 <h5 class="card-title">Processing</h5>
                 <h2 class="text-warning">
-                    {{ pengiriman_list|dictsort:"status"|selectattr:"status":"equalto":"processing"|list|length|default:"0" }}
+                    {{ status_counts.processing|default:"0" }}
                 </h2>
             </div>
         </div>
@@ -54,7 +54,7 @@
             <div class="card-body text-center">
                 <h5 class="card-title">Shipped</h5>
                 <h2 class="text-info">
-                    {{ pengiriman_list|dictsort:"status"|selectattr:"status":"equalto":"shipped"|list|length|default:"0" }}
+                    {{ status_counts.shipped|default:"0" }}
                 </h2>
             </div>
         </div>
@@ -64,7 +64,7 @@
             <div class="card-body text-center">
                 <h5 class="card-title">Delivered</h5>
                 <h2 class="text-success">
-                    {{ pengiriman_list|dictsort:"status"|selectattr:"status":"equalto":"delivered"|list|length|default:"0" }}
+                    {{ status_counts.delivered|default:"0" }}
                 </h2>
             </div>
         </div>

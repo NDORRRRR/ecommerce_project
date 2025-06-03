@@ -1,0 +1,273 @@
+{% extends 'base.html' %}
+
+{% block title %}Track Pengiriman - Transaksi #{{ transaksi.id }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <!-- Header -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white text-center">
+                <h3 class="mb-0">
+                    <i class="fas fa-shipping-fast me-2"></i>
+                    Tracking Pengiriman
+                </h3>
+                <h5 class="mb-0 mt-2">Transaksi #{{ transaksi.id }}</h5>
+            </div>
+        </div>
+
+        <!-- Informasi Pengiriman -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Informasi Pengiriman
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-2">
+                            <div class="col-5"><strong>No. Resi:</strong></div>
+                            <div class="col-7">{{ pengiriman.no_resi|default:"Belum tersedia" }}</div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-5"><strong>Ekspedisi:</strong></div>
+                            <div class="col-7">{{ pengiriman.ekspedisi|title }}</div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-5"><strong>Status:</strong></div>
+                            <div class="col-7">
+                                {% if pengiriman.status == 'pending' %}
+                                    <span class="badge bg-warning text-dark">
+                                        <i class="fas fa-clock me-1"></i>{{ pengiriman.get_status_display }}
+                                    </span>
+                                {% elif pengiriman.status == 'processing' %}
+                                    <span class="badge bg-info">
+                                        <i class="fas fa-cog me-1"></i>{{ pengiriman.get_status_display }}
+                                    </span>
+                                {% elif pengiriman.status == 'shipped' %}
+                                    <span class="badge bg-primary">
+                                        <i class="fas fa-truck me-1"></i>{{ pengiriman.get_status_display }}
+                                    </span>
+                                {% elif pengiriman.status == 'in_transit' %}
+                                    <span class="badge bg-secondary">
+                                        <i class="fas fa-route me-1"></i>{{ pengiriman.get_status_display }}
+                                    </span>
+                                {% elif pengiriman.status == 'out_for_delivery' %}
+                                    <span class="badge bg-warning">
+                                        <i class="fas fa-shipping-fast me-1"></i>{{ pengiriman.get_status_display }}
+                                    </span>
+                                {% elif pengiriman.status == 'delivered' %}
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-check-circle me-1"></i>{{ pengiriman.get_status_display }}
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-secondary">{{ pengiriman.get_status_display }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-5"><strong>Ongkir:</strong></div>
+                            <div class="col-7">Rp {{ pengiriman.ongkir|floatformat:0 }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">
+                            <i class="fas fa-map-marker-alt me-2"></i>
+                            Alamat Tujuan
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-3">{{ pengiriman.alamat_penerima }}</p>
+                        
+                        {% if pengiriman.tanggal_kirim %}
+                            <div class="row mb-2">
+                                <div class="col-5"><strong>Tanggal Kirim:</strong></div>
+                                <div class="col-7">{{ pengiriman.tanggal_kirim|date:"d M Y H:i" }}</div>
+                            </div>
+                        {% endif %}
+                        
+                        {% if pengiriman.tanggal_terkirim %}
+                            <div class="row">
+                                <div class="col-5"><strong>Tanggal Terkirim:</strong></div>
+                                <div class="col-7">{{ pengiriman.tanggal_terkirim|date:"d M Y H:i" }}</div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Timeline Pengiriman -->
+        <div class="card mb-4">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">
+                    <i class="fas fa-history me-2"></i>
+                    Timeline Pengiriman
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if tracking_history %}
+                    <div class="timeline">
+                        {% for item in tracking_history %}
+                            <div class="timeline-item {% if item.status == pengiriman.status %}current{% elif forloop.counter0 < tracking_history|length %}completed{% else %}pending{% endif %}">
+                                <div class="timeline-marker">
+                                    {% if item.status == pengiriman.status %}
+                                        <i class="fas fa-circle text-primary"></i>
+                                    {% elif forloop.counter0 < tracking_history|length %}
+                                        <i class="fas fa-check-circle text-success"></i>
+                                    {% else %}
+                                        <i class="fas fa-circle text-muted"></i>
+                                    {% endif %}
+                                </div>
+                                <div class="timeline-content">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <h6 class="mb-1 {% if item.status == pengiriman.status %}text-primary fw-bold{% elif forloop.counter0 < tracking_history|length %}text-success{% else %}text-muted{% endif %}">
+                                                {{ item.description }}
+                                            </h6>
+                                            <p class="mb-1 text-muted small">
+                                                <i class="fas fa-map-marker-alt me-1"></i>
+                                                {{ item.location }} - Status: {{ item.status|title }}
+                                            </p>
+                                            <small class="text-muted">
+                                                <i class="fas fa-clock me-1"></i>
+                                                {{ item.timestamp|date:"d M Y, H:i" }} WIB
+                                            </small>
+                                        </div>
+                                        {% if item.status == pengiriman.status %}
+                                            <span class="badge bg-primary">Saat ini</span>
+                                        {% elif forloop.counter0 < tracking_history|length %}
+                                            <span class="badge bg-success">Selesai</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-info-circle text-muted fs-1"></i>
+                        <p class="text-muted mt-2">Belum ada informasi tracking tersedia.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Catatan (jika ada) -->
+        {% if pengiriman.catatan %}
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-sticky-note me-2"></i>
+                        Catatan
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-0">{{ pengiriman.catatan }}</p>
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Action Buttons -->
+        <div class="text-center">
+            <a href="{% url 'detail_transaksi' transaksi.id %}" class="btn btn-primary me-2">
+                <i class="fas fa-arrow-left me-1"></i>
+                Kembali ke Detail Transaksi
+            </a>
+            <a href="{% url 'detail_pengiriman' transaksi.id %}" class="btn btn-secondary">
+                <i class="fas fa-eye me-1"></i>
+                Lihat Detail Pengiriman
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Custom CSS untuk Timeline -->
+<style>
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #dee2e6;
+}
+
+.timeline-item {
+    position: relative;
+    padding-bottom: 20px;
+}
+
+.timeline-item:last-child {
+    padding-bottom: 0;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -23px;
+    top: 5px;
+    width: 16px;
+    height: 16px;
+    background: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+}
+
+.timeline-marker i {
+    font-size: 12px;
+}
+
+.timeline-content {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 3px solid #dee2e6;
+    margin-left: 15px;
+}
+
+.timeline-item.current .timeline-content {
+    border-left-color: #0d6efd;
+    background: #e7f3ff;
+}
+
+.timeline-item.completed .timeline-content {
+    border-left-color: #198754;
+    background: #d1e7dd;
+}
+
+.timeline-item.pending .timeline-content {
+    border-left-color: #6c757d;
+    background: #f8f9fa;
+}
+
+@media (max-width: 768px) {
+    .timeline {
+        padding-left: 20px;
+    }
+    
+    .timeline-marker {
+        left: -13px;
+    }
+    
+    .timeline-content {
+        margin-left: 10px;
+    }
+}
+</style>
+{% endblock %}
