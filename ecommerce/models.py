@@ -219,6 +219,13 @@ class Cart(models.Model):
             total += item.get_subtotal()
         return total
 
+    def get_total_berat(self):
+        total_berat = Decimal(0)
+        for item in self.cartitem_set.all():
+            if item.produk and item.produk.berat:
+                total_berat += (item.produk.berat * item.quantity)
+        return total_berat
+
 class CartItem(models.Model):
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE)
     produk = models.ForeignKey(Produk, on_delete=models.CASCADE)
@@ -231,4 +238,4 @@ class CartItem(models.Model):
         return f"{self.quantity} x {self.produk.nama} in {self.cart.user.username}'s cart"
 
     def get_subtotal(self):
-        return self.produk.harga * self.quantityy
+        return self.produk.harga * self.quantity

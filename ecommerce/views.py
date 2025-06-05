@@ -275,8 +275,6 @@ def checkout(request):
             return redirect('cart_detail')
 
     else:
-        # Untuk metode GET, tampilkan halaman checkout
-        # Hitung ongkir awal berdasarkan alamat default user dan JNE
         initial_ongkir = calculate_ongkir(cart.get_total_berat(), 'jne')
         
         # Inisialisasi form checkout
