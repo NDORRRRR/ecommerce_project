@@ -36,12 +36,8 @@ def home(request):
     return render(request, 'ecommerce/home.html', context)
 
 def user_login(request):
-    """
-    View untuk menangani login pengguna secara manual.
-    """
     if request.user.is_authenticated:
-        return redirect('home') # Jika sudah login, alihkan ke home
-
+        return redirect('home')
     if request.method == 'POST':
         form = AuthenticationForm(request, data=request.POST)
         if form.is_valid():
@@ -50,43 +46,25 @@ def user_login(request):
             user = authenticate(username=username, password=password)
             if user is not None:
                 login(request, user)
-                messages.success(request, f'Selamat datang kembali, {user.nama or user.username}!')
                 return redirect('home')
-            else:
-                messages.error(request, 'Username atau password salah.')
-        else:
-            messages.error(request, 'Username atau password salah.')
-    else:
-        form = AuthenticationForm()
-        
+        messages.error(request, 'Username atau password salah.')
+    form = AuthenticationForm()
     return render(request, 'ecommerce/login.html', {'form': form})
 
-
 def user_register(request):
-    """
-    View untuk menangani registrasi pengguna baru.
-    """
     if request.user.is_authenticated:
-        return redirect('home') # Jika sudah login, alihkan ke home
-
+        return redirect('home')
     if request.method == 'POST':
         form = UserRegistrationForm(request.POST)
         if form.is_valid():
             user = form.save()
-            # Buat profil Buyer untuk user baru
-            if not hasattr(user, 'buyer'):
-                Buyer.objects.create(user=user)
+            Buyer.objects.create(user=user)
             login(request, user)
-            messages.success(request, 'Registrasi berhasil! Anda sekarang sudah login.')
+            messages.success(request, 'Registrasi berhasil!')
             return redirect('home')
-        else:
-            # Jika form tidak valid, pesan error akan ditangani oleh template
-            pass
     else:
         form = UserRegistrationForm()
-        
     return render(request, 'ecommerce/register.html', {'form': form})
-
 
 def user_logout(request):
     """Logout view"""

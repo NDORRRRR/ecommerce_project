@@ -7,22 +7,17 @@
 <div class="row justify-content-center">
     <div class="col-md-6">
         <div class="card">
-            <div class="card-header">
-                <h4>Login</h4>
-            </div>
+            <div class="card-header"><h4>Login</h4></div>
             <div class="card-body">
-                <form method="POST" action="{% url 'login' %}"> {# Arahkan ke view login kustom Anda #}
+                <form method="POST" action="{% url 'login' %}">
                     {% csrf_token %}
                     {{ form.as_p }}
                     <button type="submit" class="btn btn-primary">Login</button>
                     <a href="{% url 'register' %}" class="btn btn-link">Belum punya akun? Register</a>
                 </form>
-                
                 <hr>
-                
                 <div class="text-center">
                     <p class="text-muted">Atau masuk dengan:</p>
-                    {# Baris ini akan menampilkan tombol Google #}
                     {% include "socialaccount/snippets/provider_list.html" with process="login" %}
                 </div>
             </div>

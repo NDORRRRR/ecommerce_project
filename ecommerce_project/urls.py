@@ -7,7 +7,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/', include('allauth.urls')), # PENTING: URL ALLAUTH
     path('', include('ecommerce.urls')),
-]
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 # Serve media files during development
 if settings.DEBUG:
