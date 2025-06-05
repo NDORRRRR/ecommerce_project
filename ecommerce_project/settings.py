@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+from django.contrib.messages import constants as messages # Import ini di awal
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -37,16 +38,16 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django.contrib.sites', #Auth pihak ketiga
+    'django.contrib.sites', # Diperlukan oleh allauth
 
-    #Auth Appps
+    # Allauth apps
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
-    'allauth.socialaccount.providers.google',
-    'allauth.socialaccount.providers.facebook',
+    'allauth.socialaccount.providers.google', # Provider Google
+    'allauth.socialaccount.providers.facebook', # Provider Facebook (jika digunakan)
 
-    'ecommerce',  # Tambahkan aplikasi ecommerce
+    'ecommerce', # Aplikasi ecommerce Anda
 ]
 
 MIDDLEWARE = [
@@ -57,7 +58,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'allauth.account.middleware.AccountMiddleware',
+    'allauth.account.middleware.AccountMiddleware', # Diperlukan oleh allauth
 ]
 
 ROOT_URLCONF = 'ecommerce_project.urls'
@@ -65,16 +66,16 @@ ROOT_URLCONF = 'ecommerce_project.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],
+        'DIRS': [BASE_DIR / 'templates'], # Mengarahkan ke folder templates utama
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
-                'django.template.context_processors.debug',  # Tambahkan ini
+                'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'allauth.account.context_processors.account',                
-                'allauth.socialaccount.context_processors.socialaccount',
+                'allauth.account.context_processors.account', # Context processor allauth
+                'allauth.socialaccount.context_processors.socialaccount', # Context processor social allauth
             ],
         },
     },
@@ -91,7 +92,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
     }
-    # PostgreSQL
+    # PostgreSQL (contoh jika ingin menggunakan PostgreSQL)
     # 'default': {
     #     'ENGINE': 'django.db.backends.postgresql',
     #     'NAME': 'ecommerce_db',
@@ -102,8 +103,8 @@ DATABASES = {
     # }
 }
 
-# Custom User Model - PERBAIKAN: Tambahkan tanda =
-AUTH_USER_MODEL = 'ecommerce.User'
+# Custom User Model
+AUTH_USER_MODEL = 'ecommerce.User' # Menggunakan model User kustom dari aplikasi ecommerce
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -127,92 +128,33 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
-LANGUAGE_CODE = 'id-id'
+LANGUAGE_CODE = 'id-id' # Mengatur bahasa ke Indonesia
 
-TIME_ZONE = 'Asia/Jakarta'
+TIME_ZONE = 'Asia/Jakarta' # Mengatur zona waktu ke Jakarta
 
-USE_I18N = True
+USE_I18N = True # Mengaktifkan dukungan internasionalisasi
 
-USE_TZ = True
+USE_TZ = True # Mengaktifkan dukungan zona waktu
 
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = '/static/'
-# PERBAIKAN: STATICFILES_DIRS bukan STATICFILES
 STATICFILES_DIRS = [
-    BASE_DIR / "static",
+    BASE_DIR / "static", # Mengarahkan ke folder static di root proyek
 ]
-STATIC_ROOT = BASE_DIR / "staticfiles"
+STATIC_ROOT = BASE_DIR / "staticfiles" # Lokasi untuk mengumpulkan file statis di produksi
 
-# PERBAIKAN: MEDIA_URL bukan MEDAI_URL
+# Media files (User uploaded files)
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_ROOT = BASE_DIR / 'media' # Lokasi untuk menyimpan file media yang diunggah pengguna
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Fungsi Login/Logout - PERBAIKAN: Tambahkan / di akhir
-LOGIN_URL = '/login/'
-LOGIN_REDIRECT_URL = '/'
-LOGOUT_REDIRECT_URL = '/'
 
-ACCOUNT_LOGIN_METHODS = ['username', 'email']
-ACCOUNT_SIGNUP_FIELDS = ['email', 'nama', 'noHP', 'alamat'] 
-ACCOUNT_SESSION_REMEMBER = True # Ingat saya di sesi
-ACCOUNT_FORMS = {
-    'signup': 'ecommerce.forms.CustomSignupForm', # Akan kita buat nanti
-}
-SOCIALACCOUNT_FORMS = {
-    'signup': 'ecommerce.forms.CustomSocialSignupForm', # Akan kita buat nanti
-}
-
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-
-# Messages
-from django.contrib.messages import constants as messages
-MESSAGE_TAGS = {
-    messages.DEBUG: 'debug',
-    messages.INFO: 'info',
-    messages.SUCCESS: 'success',
-    messages.WARNING: 'warning',
-    messages.ERROR: 'danger',
-}
-
-# Email settings
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-# For production, use:
-# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-# EMAIL_HOST = 'smtp.gmail.com'
-# EMAIL_PORT = 587
-# EMAIL_USE_TLS = True
-# EMAIL_HOST_USER = 'your-email@gmail.com'
-# EMAIL_HOST_PASSWORD = 'your-app-password'
-
-SITE_ID = 1
-
-AUTHENTICATION_BACKENDS = [
-    'django.contrib.auth.backends.ModelBackend',
-    'allauth.account.auth_backends.AuthenticationBackend',
-]
-
-# Allauth specific settings - GANTI BAGIAN INI
-ACCOUNT_LOGIN_METHODS = ['username', 'email'] # BARU: Menggantikan ACCOUNT_AUTHENTICATION_METHOD
-ACCOUNT_EMAIL_REQUIRED = True # Umumnya tetap true jika login metode email
-ACCOUNT_USERNAME_REQUIRED = False # Jika Anda ingin login hanya pakai email, ini bisa false
-ACCOUNT_SIGNUP_FIELDS = ['email', 'nama', 'noHP', 'alamat'] # BARU: Menggantikan ACCOUNT_EMAIL_REQUIRED, ACCOUNT_USERNAME_REQUIRED, ACCOUNT_SIGNUP_PASSWORD_ENTER_TWICE
-ACCOUNT_SIGNUP_PASSWORD_ENTER_TWICE = True # Ini masih relevan jika Anda ingin password diulang
-
-ACCOUNT_SESSION_REMEMBER = True
-
-ACCOUNT_FORMS = {
-    'signup': 'ecommerce.forms.CustomSignupForm',
-}
-SOCIALACCOUNT_FORMS = {
-    'signup': 'ecommerce.forms.CustomSocialSignupForm',
-}
-
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# Allauth Settings - PENTING: Ini adalah pengaturan allauth yang benar dan lengkap
+SITE_ID = 1 # Diperlukan oleh
