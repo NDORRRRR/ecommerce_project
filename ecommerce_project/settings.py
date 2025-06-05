@@ -58,9 +58,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                # allauth specific context processors
-                'allauth.account.context_processors.account', # PERBAIKI JALUR INI
-                'allauth.socialaccount.context_processors.socialaccount', # PERBAIKI JALUR INI
+                'allauth.account.context_processors.account',
+                'allauth.socialaccount.context_processors.socialaccount',
             ],
         },
     },
@@ -106,7 +105,7 @@ AUTHENTICATION_BACKENDS = [
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
-LOGIN_URL = 'account_login' # Gunakan URL allauth untuk login
+LOGIN_URL = 'account_login'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 
