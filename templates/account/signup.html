@@ -1,40 +1,51 @@
-{% extends "accounts/base.html" %}
+{% extends "account/base.html" %}
 {% load i18n %}
-{% load socialaccount %}
 
-{# PENTING: Jika Anda belum menginstal 'django-crispy-forms', hapus baris berikut #}
-{# {% load crispy_forms_tags %} #}
-
-{% block head_title %}{% trans "Sign Up" %}{% endblock %}
+{% block head_title %}{% trans "Register" %}{% endblock %}
 
 {% block inner_content %}
-<div class="row justify-content-center">
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-header">
-                <h4>{% trans "Register" %}</h4>
-            </div>
-            <div class="card-body">
-                <form class="signup" id="signup_form" method="post" action="{% url 'account_signup' %}">
-                    {% csrf_token %}
-                    {# PENTING: Jika Anda belum menginstal 'django-crispy-forms', ganti ini dengan {{ form.as_p }} #}
-                    {{ form|crispy }}
-                    
-                    {% if redirect_field_value %}
-                    <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
+<div class="card shadow-sm">
+    <div class="card-header text-center bg-light">
+        <h4 class="mb-0">{% trans "Register" %}</h4>
+    </div>
+    <div class="card-body">
+        <p class="text-center text-muted">
+            {% trans "Sudah punya akun?" %} <a href="{% url 'account_login' %}">{% trans "Masuk di sini" %}</a>.
+        </p>
+        <hr>
+        <form class="signup" id="signup_form" method="post" action="{% url 'account_signup' %}">
+            {% csrf_token %}
+
+            {# Loop ini akan merender semua field dari form kustom Anda #}
+            {% for field in form.visible_fields %}
+                <div class="mb-3">
+                    <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}{% if field.field.required %}*{% endif %}</label>
+                    {{ field }}
+                    {% if field.help_text %}
+                        <small class="form-text text-muted">{{ field.help_text }}</small>
                     {% endif %}
-                    <button type="submit" class="btn btn-primary">{% trans "Register" %}</button>
-                </form>
-                <hr>
-                <div class="text-center">
-                    <p>{% trans "Or sign up with:" %}</p>
-                    {% include "socialaccount/snippets/provider_list.html" with process="signup" %}
+                    {% for error in field.errors %}
+                        <div class="invalid-feedback d-block">{{ error }}</div>
+                    {% endfor %}
                 </div>
-                <div class="mt-3 text-center">
-                    <a href="{% url 'account_login' %}" class="btn btn-link">{% trans "Already have an account?" %} {% trans "Login" %}</a>
+            {% endfor %}
+
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger mt-3">
+                    {% for error in form.non_field_errors %}
+                        {{ error }}
+                    {% endfor %}
                 </div>
+            {% endif %}
+
+            {% if redirect_field_value %}
+                <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
+            {% endif %}
+            
+            <div class="d-grid mt-4">
+                <button type="submit" class="btn btn-primary">{% trans "Register" %}</button>
             </div>
-        </div>
+        </form>
     </div>
 </div>
 {% endblock %}

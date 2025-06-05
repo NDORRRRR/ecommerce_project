@@ -12,7 +12,9 @@ urlpatterns = [
 
     # Authentication (DITANGANI OLEH DJANGO-ALLAUTH)
     path('accounts/', include('allauth.urls')),
-    path('logout/', views.user_logout, name='logout'), # Logout custom view tetap bisa
+    path('login/', views.user_login, name='login'),
+    path('register/', views.user_register, name='register'),
+    path('logout/', views.user_logout, name='logout'),
     
     # User pages
     path('profile/', views.profile, name='profile'),
