@@ -18,14 +18,16 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django.contrib.sites',
+    'django.contrib.sites', # Pastikan ini ada
 
     # Allauth apps
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
-    'allauth.socialaccount.providers.facebook',
+    'allauth.socialaccount.providers.facebook', # Jika ingin Facebook juga
+    # Anda bisa tambahkan provider lain di sini, contohnya:
+    # 'allauth.socialaccount.providers.github',
 
     'ecommerce',
     'crispy_forms',
@@ -56,6 +58,9 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                # allauth specific context processors
+                'allauth.account.context_processors.account', # PERBAIKI JALUR INI
+                'allauth.socialaccount.context_processors.socialaccount', # PERBAIKI JALUR INI
             ],
         },
     },
@@ -94,14 +99,14 @@ MEDIA_ROOT = BASE_DIR / 'media'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Allauth Settings
-SITE_ID = 1
+SITE_ID = 1 # PENTING: Pastikan ini diatur
 
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
-LOGIN_URL = 'login'
+LOGIN_URL = 'account_login' # Gunakan URL allauth untuk login
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 
@@ -109,6 +114,42 @@ ACCOUNT_LOGIN_METHODS = ['username', 'email']
 ACCOUNT_SIGNUP_FIELDS = ['email', 'nama', 'noHP', 'alamat']
 ACCOUNT_SESSION_REMEMBER = True
 ACCOUNT_SIGNUP_PASSWORD_ENTER_TWICE = True
+ACCOUNT_USERNAME_REQUIRED = True # Biasanya default, tapi pastikan
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_AUTHENTICATION_METHOD = 'username_email' # Memungkinkan login dengan username atau email
+ACCOUNT_EMAIL_VERIFICATION = 'none' # Atau 'mandatory'/'optional' sesuai kebutuhan Anda
+ACCOUNT_UNIQUE_EMAIL = True # Pastikan email unik
+
+# Pengaturan spesifik untuk Social Account Providers (misalnya Google)
+# SOCIALACCOUNT_PROVIDERS = {
+#     'google': {
+#         # Untuk versi allauth yang lebih baru, opsi ini mungkin tidak diperlukan
+#         # atau sudah diatur secara otomatis.
+#         # 'SCOPE': [
+#         #     'profile',
+#         #     'email',
+#         # ],
+#         # 'AUTH_PARAMS': {
+#         #     'access_type': 'online',
+#         # }
+#         'APP': {
+#             'client_id': 'YOUR_GOOGLE_CLIENT_ID', # Ganti ini!
+#             'secret': 'YOUR_GOOGLE_CLIENT_SECRET', # Ganti ini!
+#             'key': ''
+#         }
+#     },
+#     'facebook': {
+#         # 'METHOD': 'oauth2',
+#         # 'SCOPE': ['email', 'public_profile'],
+#         # 'VERIFIED_EMAIL': False,
+#         # 'APP': {
+#         #     'client_id': 'YOUR_FACEBOOK_APP_ID', # Ganti ini!
+#         #     'secret': 'YOUR_FACEBOOK_APP_SECRET', # Ganti ini!
+#         #     'key': ''
+#         # }
+#     }
+# }
+
 
 ACCOUNT_FORMS = {
     'signup': 'ecommerce.forms.CustomSignupForm',

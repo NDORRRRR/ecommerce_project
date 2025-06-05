@@ -1,23 +1,48 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
+{% load static %}
+{% load i18n %}
 {% load socialaccount %}
+{% load crispy_forms_tags %} {# Tambahkan ini untuk crispy forms #}
 
-{% block title %}Register{% endblock %}
+{% block head_title %}{% trans "Daftar" %}{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-header"><h4>Register</h4></div>
+    <div class="col-md-8 col-lg-7">
+        <div class="card shadow-sm">
+            <div class="card-header text-center bg-light">
+                <h4 class="mb-0">{% trans "Daftar Akun Baru" %}</h4>
+            </div>
             <div class="card-body">
-                <form method="POST" action="{% url 'register' %}">
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+                <p class="text-center text-muted">
+                    {% trans "Sudah punya akun?" %} <a href="{% url 'account_login' %}">{% trans "Masuk di sini" %}</a>.
+                </p>
+                <hr>
+                <form class="signup" id="signup_form" method="post" action="{% url 'account_signup' %}">
                     {% csrf_token %}
-                    {{ form.as_p }}
-                    <button type="submit" class="btn btn-primary">Register</button>
+                    {{ form|crispy }} {# Gunakan crispy filter di sini #}
+
+                    {% if redirect_field_value %}
+                        <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
+                    {% endif %}
+
+                    <div class="d-grid mt-4">
+                        <button type="submit" class="btn btn-primary">{% trans "Daftar" %}</button>
+                    </div>
                 </form>
                 <hr>
                 <div class="text-center">
-                    <p class="text-muted">Atau daftar dengan:</p>
-                    {% include "socialaccount/snippets/provider_list.html" with process="login" %}
+                    <p class="text-muted">{% trans "Atau daftar dengan:" %}</p>
+                    {% include "socialaccount/snippets/provider_list.html" with process="signup" %}
                 </div>
             </div>
         </div>
