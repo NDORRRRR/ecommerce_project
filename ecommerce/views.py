@@ -11,26 +11,22 @@ from decimal import Decimal
 import random
 import string
 
-from .models import User, Produk, Pengiriman, Transaksi, TransaksiProduk, Buyer, Cart, CartItem, Laporan1, UlasanProduk # Pastikan semua model diimpor
-from .forms import UserProfileForm, UlasanProdukForm, CheckoutForm # Pastikan semua form diimpor
+# Pastikan semua model diimpor
+from .models import User, Produk, Pengiriman, Transaksi, TransaksiProduk, Buyer, Cart, CartItem, Laporan1, UlasanProduk
+
+# Pastikan semua form diimpor
+from .forms import UserProfileForm, UlasanProdukForm, CheckoutForm, UpdatePengirimanForm, PengirimanFilterForm
 
 
 def home(request):
     """Homepage dengan daftar produk"""
     produk_list = Produk.objects.all()
 
-    # Search functionality (sudah dipindahkan ke navbar)
     search = request.GET.get('search')
     if search:
         produk_list = produk_list.filter(
             Q(nama__icontains=search) | Q(kategori__icontains=search)
         )
-    
-    # Filter berdasarkan kategori (dihapus dari sidebar, bisa ditambahkan lagi di navbar jika perlu)
-    # kategori_list = Produk.objects.values_list('kategori', flat=True).distinct()
-    # kategori = request.GET.get('kategori')
-    # if kategori:
-    #     produk_list = produk_list.filter(kategori=kategori)
     
     paginator = Paginator(produk_list, 12)
     page_number = request.GET.get('page')
@@ -38,15 +34,12 @@ def home(request):
     
     context = {
         'produk_list': produk_list,
-        # 'kategori_list': kategori_list, # Nonaktifkan jika tidak ada filter kategori di UI
-        # 'selected_kategori': kategori,
         'search_query': search
     }
     return render(request, 'ecommerce/home.html', context)
 
 # --- Autentikasi (DITANGANI OLEH DJANGO-ALLAUTH) ---
-# Fungsi user_login dan user_register kustom Anda tidak lagi digunakan
-# karena allauth akan mengelola proses login/register.
+# Fungsi user_login dan user_register kustom Anda TIDAK LAGI DIGUNAKAN.
 # Saya akan mempertahankan user_logout untuk pesan kustom.
 
 def user_logout(request):
@@ -79,19 +72,15 @@ def produk_detail(request, produk_id):
     
     if request.user.is_authenticated and hasattr(request.user, 'buyer'):
         buyer = request.user.buyer
-        # Cek apakah pengguna sudah pernah mengulas produk ini
         if UlasanProduk.objects.filter(produk=produk, buyer=buyer).exists():
             sudah_ulasan = True
         else:
-            # Pastikan pembeli telah membeli produk ini sebelum bisa mengulas
             if TransaksiProduk.objects.filter(
                 produk=produk, 
                 transaksi__buyer=buyer, 
                 transaksi__status__in=['completed', 'shipped']
             ).exists():
                 form_ulasan = UlasanProdukForm()
-            # else:
-                # messages.info(request, "Anda harus membeli dan menyelesaikan transaksi produk ini untuk dapat memberikan ulasan.")
         
     context = {
         'produk': produk,
@@ -105,40 +94,42 @@ def produk_detail(request, produk_id):
 def tambah_ulasan(request, produk_id):
     produk = get_object_or_404(Produk, id=produk_id)
     
-    if not hasattr(request.user, 'buyer'):
-        messages.error(request, 'Anda harus memiliki profil pembeli untuk dapat mengulas.')
-        return redirect('produk_detail', produk_id=produk.id)
-
-    buyer = request.user.buyer
-
-    # Cek apakah pembeli telah membeli produk ini dan transaksi selesai
-    if not TransaksiProduk.objects.filter(
-        produk=produk, 
-        transaksi__buyer=buyer, 
-        transaksi__status__in=['completed', 'shipped']
-    ).exists():
-        messages.error(request, 'Anda hanya dapat mengulas produk yang telah Anda beli dan selesaikan transaksinya.')
-        return redirect('produk_detail', produk_id=produk.id)
-
     if request.method == 'POST':
+        # Pastikan user adalah seorang Buyer
+        if not hasattr(request.user, 'buyer'):
+            messages.error(request, 'Hanya pembeli yang bisa memberikan ulasan.')
+            return redirect('produk_detail', produk_id=produk.id)
+
+        buyer = request.user.buyer
+
+        # Cek apakah pembeli telah membeli produk ini
+        if not TransaksiProduk.objects.filter(
+            produk=produk, 
+            transaksi__buyer=buyer, 
+            transaksi__status__in=['completed', 'shipped']
+        ).exists():
+            messages.error(request, 'Anda harus membeli produk ini untuk memberi ulasan.')
+            return redirect('produk_detail', produk_id=produk.id)
+
+        # Cek apakah sudah pernah mengulas
+        if UlasanProduk.objects.filter(produk=produk, buyer=buyer).exists():
+            messages.warning(request, 'Anda sudah memberikan ulasan untuk produk ini.')
+            return redirect('produk_detail', produk_id=produk.id)
+
         form = UlasanProdukForm(request.POST)
         if form.is_valid():
-            # Cek jika user sudah mengulas produk ini sebelumnya (race condition)
-            if UlasanProduk.objects.filter(produk=produk, buyer=buyer).exists():
-                messages.warning(request, 'Anda sudah memberikan ulasan untuk produk ini.')
-                return redirect('produk_detail', produk_id=produk.id)
-
-            ulasan = UlasanProduk.objects.create(
-                produk=produk,
-                buyer=buyer,
-                rating=form.cleaned_data['rating'],
-                komentar=form.cleaned_data['komentar']
-            )
+            ulasan = form.save(commit=False)
+            ulasan.produk = produk
+            ulasan.buyer = buyer
+            ulasan.save()
             messages.success(request, 'Ulasan Anda berhasil ditambahkan!')
             return redirect('produk_detail', produk_id=produk.id)
         else:
-            messages.error(request, 'Ada kesalahan dalam formulir ulasan Anda.')
-    
+            # Jika form tidak valid, kembali ke halaman detail dengan pesan error
+            # (Untuk implementasi lebih lanjut, Anda bisa meneruskan form error ke template)
+            messages.error(request, 'Gagal menambahkan ulasan. Periksa kembali input Anda.')
+            return redirect('produk_detail', produk_id=produk.id)
+            
     return redirect('produk_detail', produk_id=produk.id)
 
 # --- Keranjang Belanja & Checkout ---
@@ -310,8 +301,9 @@ def checkout(request):
         return render(request, 'ecommerce/checkout.html', context)
 
 # --- Transaksi & Pengiriman ---
-# Fungsi buat_transaksi sebelumnya dihapus/dimodifikasi karena sudah digantikan oleh alur keranjang belanja.
-# Jika ada kebutuhan untuk transaksi tanpa keranjang, fungsi ini harus didefinisikan ulang secara terpisah.
+# Fungsi buat_transaksi sebelumnya tidak digunakan lagi karena diganti alur keranjang
+# Jika ada kebutuhan untuk transaksi tanpa keranjang, fungsi ini harus didefinisikan ulang secara terpisah
+# atau dihapus.
 
 @login_required
 def riwayat_transaksi(request):
@@ -484,14 +476,63 @@ def mengelola_data_produk(request):
     produk_list = Produk.objects.all()
     return render(request, 'ecommerce/admin/kelola_produk.html', {'produk_list': produk_list})
 
+@login_required
+def kelola_pengiriman(request):
+    if not request.user.is_staff:
+        messages.error(request, 'Akses ditolak!')
+        return redirect('home')
+
+    # Ambil filter status dari URL
+    selected_status = request.GET.get('status')
+    
+    pengiriman_list = Pengiriman.objects.all().order_by('-created_at')
+    if selected_status:
+        pengiriman_list = pengiriman_list.filter(status=selected_status)
+
+    # Hitung statistik untuk summary cards
+    status_counts = Pengiriman.objects.values('status').annotate(count=Count('id'))
+    status_counts_dict = {item['status']: item['count'] for item in status_counts}
+    
+    # Paginasi
+    paginator = Paginator(pengiriman_list, 15) # 15 item per halaman
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'pengiriman_list': page_obj,
+        'selected_status': selected_status,
+        'status_counts': status_counts_dict
+    }
+    
+    return render(request, 'ecommerce/admin/kelola_pengiriman.html', context)
+
 def mengelola_data_ongkir(request):
     """Mengelola data ongkir"""
     if not request.user.is_staff:
         messages.error(request, 'Akses ditolak!')
         return redirect('home')
     
-    pengiriman_list = Pengiriman.objects.all()
-    return render(request, 'ecommerce/admin/kelola_ongkir.html', {'pengiriman_list': pengiriman_list})
+    ekspedisi_choices = Pengiriman.EKSPEDISI_CHOICES
+    
+    tarif_list = [
+        {'ekspedisi': 'jne', 'nama': 'JNE', 'tarif_dasar': Decimal('9000'), 'tarif_tambahan_per_kg': Decimal('4500'), 'estimasi': '1-3 hari', 'status': 'Aktif'},
+        {'ekspedisi': 'pos', 'nama': 'Pos Indonesia', 'tarif_dasar': Decimal('8000'), 'tarif_tambahan_per_kg': Decimal('4000'), 'estimasi': '2-4 hari', 'status': 'Aktif'},
+        {'ekspedisi': 'tiki', 'nama': 'TIKI', 'tarif_dasar': Decimal('9500'), 'tarif_tambahan_per_kg': Decimal('4750'), 'estimasi': '1-3 hari', 'status': 'Aktif'},
+        {'ekspedisi': 'j&t', 'nama': 'J&T Express', 'tarif_dasar': Decimal('8500'), 'tarif_tambahan_per_kg': Decimal('4250'), 'estimasi': '1-3 hari', 'status': 'Aktif'},
+        {'ekspedisi': 'sicepat', 'nama': 'SiCepat', 'tarif_dasar': Decimal('8000'), 'tarif_tambahan_per_kg': Decimal('4000'), 'estimasi': '1-2 hari', 'status': 'Aktif'},
+        {'ekspedisi': 'anteraja', 'nama': 'AnterAja', 'tarif_dasar': Decimal('7500'), 'tarif_tambahan_per_kg': Decimal('3750'), 'estimasi': '1-3 hari', 'status': 'Aktif'},
+        {'ekspedisi': 'ninja', 'nama': 'Ninja Express', 'tarif_dasar': Decimal('7000'), 'tarif_tambahan_per_kg': Decimal('3500'), 'estimasi': '1-3 hari', 'status': 'Aktif'},
+        {'ekspedisi': 'gosend', 'nama': 'GoSend', 'tarif_dasar': Decimal('17000'), 'tarif_tambahan_per_kg': Decimal('8500'), 'estimasi': 'Same Day', 'status': 'Aktif'},
+        {'ekspedisi': 'grab', 'nama': 'GrabExpress', 'tarif_dasar': Decimal('12000'), 'tarif_tambahan_per_kg': Decimal('6000'), 'estimasi': 'Same Day', 'status': 'Aktif'},
+    ]
+    
+    pengiriman_terbaru = Pengiriman.objects.all().order_by('-created_at')[:10]
+
+    context = {
+        'tarif_list': tarif_list,
+        'pengiriman_list': pengiriman_terbaru,
+    }
+    return render(request, 'ecommerce/admin/kelola_ongkir.html', context)
 
 def melihat_data_pengiriman(request):
     if not request.user.is_staff:
@@ -508,13 +549,19 @@ def melihat_data_pengiriman(request):
     if ekspedisi_filter:
         pengiriman_list = pengiriman_list.filter(ekspedisi=ekspedisi_filter)
 
-    start_date = request.GET.get('start_date')
-    end_date = request.GET.get('end_date')
-    if start_date and end_date:
-        pengiriman_list = pengiriman_list.filter(
-            created_at__date__range=[start_date, end_date]
-        )
+    start_date_str = request.GET.get('start_date')
+    end_date_str = request.GET.get('end_date')
 
+    if start_date_str and end_date_str:
+        try:
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+            end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+            pengiriman_list = pengiriman_list.filter(
+                created_at__date__range=[start_date, end_date]
+            )
+        except ValueError:
+            messages.error(request, "Format tanggal tidak valid. Gunakan YYYY-MM-DD.")
+    
     stats = {
         'pending': pengiriman_list.filter(status='pending').count(),
         'processing': pengiriman_list.filter(status='processing').count(),
@@ -524,6 +571,12 @@ def melihat_data_pengiriman(request):
         'failed': pengiriman_list.filter(status='failed').count(),
     }
     
+    status_chart_labels = [label for value, label in Pengiriman.STATUS_CHOICES]
+    status_chart_data = [pengiriman_list.filter(status=value).count() for value, _ in Pengiriman.STATUS_CHOICES]
+
+    ekspedisi_chart_labels = [label for value, label in Pengiriman.EKSPEDISI_CHOICES]
+    ekspedisi_chart_data = [pengiriman_list.filter(ekspedisi=value).count() for value, _ in Pengiriman.EKSPEDISI_CHOICES]
+
     for pengiriman in pengiriman_list:
         if pengiriman.tanggal_kirim and pengiriman.tanggal_terkirim:
             delta = pengiriman.tanggal_terkirim - pengiriman.tanggal_kirim
@@ -534,8 +587,12 @@ def melihat_data_pengiriman(request):
         'status_choices': Pengiriman.STATUS_CHOICES,
         'ekspedisi_choices': Pengiriman.EKSPEDISI_CHOICES,
         'stats': stats,
+        'status_chart_labels': status_chart_labels,
+        'status_chart_data': status_chart_data,
+        'ekspedisi_chart_labels': ekspedisi_chart_labels,
+        'ekspedisi_chart_data': ekspedisi_chart_data,
+        'request_params': request.GET,
     })
-
 
 def mengelola_data_pelanggan(request):
     if not request.user.is_staff:
@@ -669,8 +726,8 @@ def melihat_laporan_transaksi(request):
     transaksi_list = Transaksi.objects.all()
     
     period = request.GET.get('period', 'month')
-    start_date = request.GET.get('start_date')
-    end_date = request.GET.get('end_date')
+    start_date_str = request.GET.get('start_date')
+    end_date_str = request.GET.get('end_date')
     status_filter = request.GET.get('status')
 
     today = timezone.localdate()
@@ -690,8 +747,16 @@ def melihat_laporan_transaksi(request):
         start_date = today.replace(month=1, day=1)
         end_date = today.replace(month=12, day=31)
         period_label = 'Tahun Ini'
-    elif period == 'custom' and start_date and end_date:
-        period_label = f'{start_date} s/d {end_date}'
+    elif period == 'custom' and start_date_str and end_date_str:
+        try:
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+            end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+            period_label = f'{start_date_str} s/d {end_date_str}'
+        except ValueError:
+            messages.error(request, "Format tanggal tidak valid. Gunakan YYYY-MM-DD.")
+            start_date = today.replace(day=1)
+            end_date = (today.replace(day=1) + timedelta(days=32)).replace(day=1) - timedelta(days=1)
+            period_label = 'Bulan Ini'
     else:
         start_date = today.replace(day=1)
         end_date = (today.replace(day=1) + timedelta(days=32)).replace(day=1) - timedelta(days=1)

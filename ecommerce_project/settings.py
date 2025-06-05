@@ -1,5 +1,6 @@
 from pathlib import Path
-from django.contrib.messages import constants as messages # Import ini di awal
+from django.contrib.messages import constants as messages
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -16,14 +17,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django.contrib.sites', # Diperlukan oleh django.contrib.sites dan allauth
+    'django.contrib.sites',
 
     # Allauth apps
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
-    'allauth.socialaccount.providers.facebook', # Tambahkan jika Anda menggunakan Facebook provider
+    'allauth.socialaccount.providers.facebook',
 
     'ecommerce', # Aplikasi ecommerce Anda
     'crispy_forms', # Jika menggunakan django-crispy-forms
@@ -126,6 +127,5 @@ MESSAGE_TAGS = {
     messages.ERROR: 'danger',
 }
 
-# Crispy Forms (jika digunakan)
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"

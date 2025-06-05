@@ -38,7 +38,7 @@
                                 <span class="text-danger">Habis</span>
                             {% endif %}
                         </div>
-                        {# BARU: Tampilan Rating Rata-rata Produk (pastikan sudah ada di views.py) #}
+                        {# Tampilan Rating Rata-rata Produk #}
                         <div class="mb-3">
                             <strong>Rating:</strong>
                             {% for i in "12345" %}
@@ -56,8 +56,8 @@
                     <div class="col-md-6">
                         {% if user.is_authenticated %}
                             {% if produk.stock > 0 %}
-                                <h5><i class="fas fa-shopping-cart"></i> Tambah ke Keranjang</h5> {# UBAH TEKS INI #}
-                                <form method="POST" action="{% url 'add_to_cart' produk.id %}" id="addToCartForm"> {# UBAH ACTION INI #}
+                                <h5><i class="fas fa-shopping-cart"></i> Tambah ke Keranjang</h5>
+                                <form method="POST" action="{% url 'add_to_cart' produk.id %}" id="addToCartForm">
                                     {% csrf_token %}
                                     <input type="hidden" name="produk_id" value="{{ produk.id }}">
                                     <div class="mb-3">
@@ -92,7 +92,7 @@
             </div>
         </div>
 
-        {# BAGIAN ULASAN PRODUK #}
+        {# BARU: Bagian Ulasan Produk #}
         <div class="card mt-4">
             <div class="card-header">
                 <h5 class="mb-0"><i class="fas fa-comments me-2"></i>Ulasan Pelanggan ({{ ulasan_produk.count }})</h5>

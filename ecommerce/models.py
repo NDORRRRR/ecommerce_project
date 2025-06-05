@@ -1,66 +1,56 @@
 # ecommerce/models.py
 from django.db import models
 from django.contrib.auth.models import AbstractUser
-from django.core.validators import MinValueValidator, MaxValueValidator # Tambahkan MaxValueValidator
+from django.core.validators import MinValueValidator, MaxValueValidator
 from decimal import Decimal
 
 class User(AbstractUser):
     nama = models.CharField(max_length=100)
     email = models.EmailField(unique=True)
     alamat = models.TextField()
-    password = models.CharField(max_length=128)
+    #password = models.CharField(max_length=128)
     noHP = models.CharField(max_length=15)
     
-    # Perbaikan metode login, ubstart, ubahprofil, logout:
-    # Metode ini tidak perlu didefinisikan jika Anda mengandalkan fitur bawaan Django/allauth.
-    # Jika ingin tetap ada, pastikan isinya tidak kosong dan memiliki logika.
-    # Untuk saat ini, saya akan mengomentarinya atau menghapusnya jika tidak ada gunanya.
-    # def login(self): pass
-    # def ubstart(self): pass
-    # def ubahprofil(self): pass
-    # def logout(self): pass
+    def __str__(self):
+        return self.username
 
 class Admin(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     nama = models.CharField(max_length=100)
 
+    def __str__(self):
+        return self.nama
+
 class Buyer(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     
-    # Perbaikan metode:
-    # def frequent(self): pass
-    # def konfirmasiPembayaran(self): pass
-    # def lihhatdatapengiriman(self): pass
-    
     def riwayatTransaksi(self):
-        # Method untuk melihat riwayat transaksi
         return Transaksi.objects.filter(buyer=self)
     
     def __str__(self):
-        return self.user.username # Representasi string untuk Buyer
+        return self.user.username
 
 class Produk(models.Model):
     nama = models.CharField(max_length=200)
     kategori = models.CharField(max_length=100)
     harga = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal('0.01'))])
     stock = models.IntegerField(validators=[MinValueValidator(0)])
-    berat = models.DecimalField(max_digits=8, decimal_places=2, default=1.0, help_text="Berat dalam kg")
+    berat = models.DecimalField(max_digits=8, decimal_places=2, default=Decimal('1.0'), help_text="Berat dalam kg") # Pastikan Decimal
     gambar = models.ImageField(upload_to='produk_images/', blank=True, null=True)
-    rating_rata_rata = models.DecimalField(max_digits=3, decimal_places=2, default=0.00) # BARU: Untuk rating rata-rata
+    rating_rata_rata = models.DecimalField(max_digits=3, decimal_places=2, default=Decimal('0.00'))
 
-    def updatestock(self):
-        # Method untuk update stock, mungkin memerlukan logika lebih lanjut
-        pass
-
-    def update_average_rating(self): # BARU: Fungsi untuk update rating rata-rata
+    def update_average_rating(self):
         reviews = self.ulasanproduk_set.all()
         if reviews.exists():
             total_rating = sum(review.rating for review in reviews)
-            self.rating_rata_rata = total_rating / len(reviews)
+            self.rating_rata_rata = Decimal(total_rating) / Decimal(len(reviews))
         else:
-            self.rating_rata_rata = Decimal('0.00') # Menggunakan Decimal untuk konsistensi
+            self.rating_rata_rata = Decimal('0.00')
         self.save()
 
+    def updatestock(self):
+        pass
+    
     def __str__(self):
         return self.nama
 
@@ -108,7 +98,6 @@ class Pengiriman(models.Model):
         return self.get_status_display()
     
     def get_status_badge_color(self):
-        """Return Bootstrap badge color based on status"""
         status_colors = {
             'pending': 'secondary',
             'processing': 'warning',
@@ -159,7 +148,7 @@ class Transaksi(models.Model):
         pass
     
     def dataongkir(self):
-        return self.pengiriman.ongkir if self.pengiriman else 0
+        return self.pengiriman.ongkir if self.pengiriman else Decimal('0.00')
     
     def statuslv(self):
         pass
@@ -172,11 +161,17 @@ class Transaksi(models.Model):
         return self.total_double
     
     def get_total_berat(self):
-        """Calculate total weight of all products in transaction"""
         total_berat = Decimal(0)
         for item in self.transaksiproduk_set.all():
-            total_berat += (item.produk.berat * item.quantity)
+            if item.produk and item.produk.berat:
+                total_berat += (item.produk.berat * item.quantity)
         return total_berat
+
+    def get_subtotal(self):
+        """Menghitung subtotal produk (Total - Ongkir)"""
+        if self.pengiriman:
+            return self.total_double - self.pengiriman.ongkir
+        return self.total_double
 
 class TransaksiProduk(models.Model):
     transaksi = models.ForeignKey(Transaksi, on_delete=models.CASCADE)
@@ -193,7 +188,7 @@ class TransaksiProduk(models.Model):
     class Meta:
         unique_together = ('transaksi', 'produk')
 
-# BARU: Model Cart
+# Model Cart
 class Cart(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -218,7 +213,7 @@ class Cart(models.Model):
                 total_berat += (item.produk.berat * item.quantity)
         return total_berat
 
-# BARU: Model CartItem
+# Model CartItem
 class CartItem(models.Model):
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE)
     produk = models.ForeignKey(Produk, on_delete=models.CASCADE)
@@ -233,7 +228,7 @@ class CartItem(models.Model):
     def get_subtotal(self):
         return self.produk.harga * self.quantity
 
-# BARU: Model UlasanProduk (Review)
+# Model UlasanProduk (Review)
 class UlasanProduk(models.Model):
     produk = models.ForeignKey(Produk, on_delete=models.CASCADE)
     buyer = models.ForeignKey(Buyer, on_delete=models.CASCADE)

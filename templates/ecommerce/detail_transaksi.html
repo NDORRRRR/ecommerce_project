@@ -108,7 +108,7 @@
                         <tfoot>
                             <tr class="table-secondary">
                                 <td colspan="5"><strong>Subtotal Produk</strong></td>
-                                <td><strong>Rp {{ transaksi.total_double|add:transaksi.pengiriman.ongkir|floatformat:0 }}</strong></td>
+                                <td><strong>Rp {{ transaksi.get_subtotal|floatformat:0 }}</strong></td>
                             </tr>
                             {% if transaksi.pengiriman %}
                             <tr class="table-info">

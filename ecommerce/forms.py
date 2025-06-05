@@ -6,18 +6,21 @@ from decimal import Decimal
 # Import model Anda
 from .models import User, Produk, Pengiriman, Transaksi, UlasanProduk, Buyer
 
-# Import allauth forms (pastikan path ini benar)
+# Import allauth forms
 from allauth.account.forms import SignupForm # Untuk form pendaftaran standar allauth
 from allauth.socialaccount.forms import SignupForm as SocialSignupForm # Untuk form pendaftaran sosial allauth
 
 
-# Form Pendaftaran Pengguna (Kustom, diganti oleh allauth tapi strukturnya bisa jadi referensi)
+# Form Pendaftaran Pengguna (Ini adalah form kustom lama Anda,
+# yang diganti oleh CustomSignupForm dari allauth)
+# Saya pertahankan ini agar tidak ada masalah import jika ada bagian lain yang masih menggunakannya,
+# tetapi sebaiknya tidak digunakan lagi.
 class UserRegistrationForm(UserCreationForm):
     nama = forms.CharField(max_length=100, help_text="Nama Lengkap")
-    email = forms.EmailField(unique=True, help_text="Alamat Email")
+    email = forms.EmailField(help_text="Alamat Email")
     alamat = forms.CharField(widget=forms.Textarea(attrs={'rows': 3}), help_text="Alamat Lengkap")
     noHP = forms.CharField(max_length=15, help_text="Nomor Telepon")
-
+    
     class Meta(UserCreationForm.Meta):
         model = User
         fields = UserCreationForm.Meta.fields + ('nama', 'email', 'alamat', 'noHP',)
@@ -74,13 +77,17 @@ class CheckoutForm(forms.Form):
     )
     ekspedisi = forms.ChoiceField(
         label='Pilih Ekspedisi Pengiriman',
-        choices=Pengiriman.EKSPEDISI_CHOICES,
+        choices=Pengiriman.EKSPEDISI_CHOICES, # Mengambil dari model Pengiriman
         widget=forms.RadioSelect(attrs={'class': 'form-check-input'})
     )
     catatan = forms.CharField(
         label='Catatan untuk Kurir (Opsional)',
         required=False,
-        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
+        widget=forms.Textarea(attrs={
+            'class': 'form-control', 
+            'rows': 2,
+            'placeholder': 'Catatan pengiriman (opsional)'
+        }),
         help_text="Contoh: Titip ke tetangga jika tidak ada di rumah."
     )
 
@@ -88,37 +95,33 @@ class CheckoutForm(forms.Form):
 class ProdukForm(forms.ModelForm):
     class Meta:
         model = Produk
-        fields = '__all__'
+        fields = ['nama', 'kategori', 'harga', 'stock', 'berat', 'gambar']
         widgets = {
             'nama': forms.TextInput(attrs={'class': 'form-control'}),
             'kategori': forms.TextInput(attrs={'class': 'form-control'}),
-            'harga': forms.NumberInput(attrs={'class': 'form-control'}),
+            'harga': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
             'stock': forms.NumberInput(attrs={'class': 'form-control'}),
-            'berat': forms.NumberInput(attrs={'class': 'form-control'}),
-            # 'gambar': forms.FileInput(attrs={'class': 'form-control'}), # Untuk input file
+            'berat': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.1', 'placeholder': 'Berat dalam kg'}),
         }
 
 # Form Pengiriman (untuk admin)
 class PengirimanForm(forms.ModelForm):
     class Meta:
         model = Pengiriman
-        fields = '__all__'
+        fields = ['alamat_penerima', 'ekspedisi', 'ongkir', 'status', 'no_resi', 'estimasi_hari', 'catatan']
         widgets = {
-            'alamat_pengirim': forms.TextInput(attrs={'class': 'form-control'}),
             'alamat_penerima': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'ongkir': forms.NumberInput(attrs={'class': 'form-control'}),
-            'status': forms.Select(attrs={'class': 'form-select'}),
-            'ekspedisi': forms.Select(attrs={'class': 'form-select'}),
-            'no_resi': forms.TextInput(attrs={'class': 'form-control'}),
-            'estimasi_hari': forms.NumberInput(attrs={'class': 'form-control'}),
-            'tanggal_kirim': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
-            'tanggal_terkirim': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
-            'catatan': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
+            'ekspedisi': forms.Select(attrs={'class': 'form-control'}),
+            'ongkir': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'status': forms.Select(attrs={'class': 'form-control'}),
+            'no_resi': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Contoh: JNE1234567890'}),
+            'estimasi_hari': forms.NumberInput(attrs={'class': 'form-control', 'min': '1', 'max': '30'}),
+            'catatan': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Catatan pengiriman (opsional)'}),
         }
 
 class TransaksiFilterForm(forms.Form):
     status = forms.ChoiceField(
-        choices=[('', 'All')] + Transaksi.STATUS_CHOICES,
+        choices=[('', 'All')] + list(Transaksi._meta.get_field('status').choices),
         required=False,
         widget=forms.Select(attrs={'class': 'form-select'})
     )
@@ -134,15 +137,22 @@ class TransaksiFilterForm(forms.Form):
 class UpdatePengirimanForm(forms.ModelForm):
     class Meta:
         model = Pengiriman
-        fields = ['status', 'no_resi', 'ekspedisi', 'tanggal_kirim', 'tanggal_terkirim', 'catatan']
+        fields = ['status', 'no_resi', 'tanggal_kirim', 'tanggal_terkirim', 'catatan']
         widgets = {
             'status': forms.Select(attrs={'class': 'form-select'}),
             'no_resi': forms.TextInput(attrs={'class': 'form-control'}),
-            'ekspedisi': forms.Select(attrs={'class': 'form-select'}),
             'tanggal_kirim': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
             'tanggal_terkirim': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
             'catatan': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['status'].label = 'Status Pengiriman'
+        self.fields['no_resi'].label = 'Nomor Resi'
+        self.fields['tanggal_kirim'].label = 'Tanggal Kirim'
+        self.fields['tanggal_terkirim'].label = 'Tanggal Terkirim'
+        self.fields['catatan'].label = 'Catatan'
 
 class PengirimanFilterForm(forms.Form):
     status = forms.ChoiceField(
@@ -163,12 +173,17 @@ class PengirimanFilterForm(forms.Form):
         required=False,
         widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control'})
     )
+    no_resi = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Cari berdasarkan nomor resi'
+        })
+    )
 
 
 # Custom Signup Form untuk Allauth
-# Ini penting untuk menambahkan field kustom Anda saat pendaftaran allauth
 class CustomSignupForm(SignupForm):
-    # Field yang akan diambil dari user model kustom
     nama = forms.CharField(max_length=100, label='Nama Lengkap', widget=forms.TextInput(attrs={'class': 'form-control'}))
     noHP = forms.CharField(max_length=15, label='No. HP', widget=forms.TextInput(attrs={'class': 'form-control'}))
     alamat = forms.CharField(widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3}), label='Alamat')
@@ -179,7 +194,6 @@ class CustomSignupForm(SignupForm):
         user.noHP = self.cleaned_data['noHP']
         user.alamat = self.cleaned_data['alamat']
         user.save()
-        # Pastikan objek Buyer dibuat untuk pengguna baru
         Buyer.objects.create(user=user)
         return user
 
@@ -191,14 +205,11 @@ class CustomSocialSignupForm(SocialSignupForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Isi field 'nama' jika tersedia dari social provider
-        if 'first_name' in self.user.extra_data and 'last_name' in self.user.extra_data:
+        if hasattr(self.user, 'extra_data') and 'first_name' in self.user.extra_data and 'last_name' in self.user.extra_data:
             self.fields['nama'].initial = f"{self.user.extra_data.get('first_name', '')} {self.user.extra_data.get('last_name', '')}".strip()
-        elif 'name' in self.user.extra_data: # Untuk Google, nama bisa langsung di 'name'
+        elif hasattr(self.user, 'extra_data') and 'name' in self.user.extra_data:
             self.fields['nama'].initial = self.user.extra_data.get('name', '')
 
-        # Sembunyikan field yang mungkin tidak relevan atau sudah diisi dari social account
-        # Contoh: Jika email sudah diverifikasi dari Google, sembunyikan field email
         if self.user and self.user.email:
             self.fields['email'].widget = forms.HiddenInput()
             self.fields['email'].required = False
@@ -209,6 +220,5 @@ class CustomSocialSignupForm(SocialSignupForm):
         user.noHP = self.cleaned_data['noHP']
         user.alamat = self.cleaned_data['alamat']
         user.save()
-        # Pastikan objek Buyer dibuat untuk pengguna baru
         Buyer.objects.create(user=user)
         return user
