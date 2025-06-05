@@ -2,3 +2,9 @@ Django>=4.2.0,<5.0
 Pillow>=10.0.0
 python-decouple>=3.8
 psycopg2-binary>=2.9.0
+django-allauth
+requests
+PyJWT
+cryptography
+django-crispy-forms 
+crispy-bootstrap5
