@@ -37,6 +37,15 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites', #Auth pihak ketiga
+
+    #Auth Appps
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
+    'allauth.socialaccount.providers.facebook',
+
     'ecommerce',  # Tambahkan aplikasi ecommerce
 ]
 
@@ -48,6 +57,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
 ]
 
 ROOT_URLCONF = 'ecommerce_project.urls'
@@ -148,6 +158,21 @@ LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 
+ACCOUNT_AUTHENTICATION_METHOD = 'username_email'
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_UNIQUE_EMAIL = True
+ACCOUNT_USERNAME_REQUIRED = False # Username tidak wajib (jika login pakai email)
+ACCOUNT_SIGNUP_PASSWORD_ENTER_TWICE = True # Saat daftar, masukkan password dua kali
+ACCOUNT_SESSION_REMEMBER = True # Ingat saya di sesi
+ACCOUNT_FORMS = {
+    'signup': 'ecommerce.forms.CustomSignupForm', # Akan kita buat nanti
+}
+SOCIALACCOUNT_FORMS = {
+    'signup': 'ecommerce.forms.CustomSocialSignupForm', # Akan kita buat nanti
+}
+
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
 # Messages
 from django.contrib.messages import constants as messages
 MESSAGE_TAGS = {
@@ -167,3 +192,10 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 # EMAIL_USE_TLS = True
 # EMAIL_HOST_USER = 'your-email@gmail.com'
 # EMAIL_HOST_PASSWORD = 'your-app-password'
+
+SITE_ID = 1
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
+]

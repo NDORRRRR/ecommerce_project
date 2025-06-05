@@ -1,6 +1,8 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from .models import User, Produk, Pengiriman, Transaksi
+from allauth.account.forms import SignupForm
+from allauth.socialaccount.form import SignupForm as SocialSignForm
 
 class UserRegistrationForm(UserCreationForm):
     nama = forms.CharField(max_length=100, widget=forms.TextInput(attrs={'class': 'form-control'}))
@@ -176,3 +178,37 @@ class PengirimanFilterForm(forms.Form):
             'placeholder': 'Cari berdasarkan nomor resi'
         })
     )
+
+class CustomSignupForm(SignupForm):
+    nama = forms.CharField(max_length=100, label='Nama Lengkap', widget=forms.TextInput(attrs={'class': 'form-control'}))
+    noHP = forms.CharField(max_length=15, label='No. HP', widget=forms.TextInput(attrs={'class': 'form-control'}))
+    alamat = forms.CharField(widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3}), label='Alamat')
+
+    def save(self, request):
+        user = super(CustomSignupForm, self).save(request)
+        user.nama = self.cleaned_data['nama']
+        user.noHP = self.cleaned_data['noHP']
+        user.alamat = self.cleaned_data['alamat']
+        user.save()
+        Buyer.objects.create(user=user)
+        return user
+
+class CustomSocialSignupForm(SocialSignupForm):
+    nama = forms.CharField(max_length=100, label='Nama Lengkap', widget=forms.TextInput(attrs={'class': 'form-control'}))
+    noHP = forms.CharField(max_length=15, label='No. HP', widget=forms.TextInput(attrs={'class': 'form-control'}))
+    alamat = forms.CharField(widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3}), label='Alamat')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Isi field 'nama' jika tersedia dari social provider
+        if 'nama' in self.fields:
+            self.fields['nama'].initial = self.user.first_name + ' ' + self.user.last_name if self.user.first_name or self.user.last_name else ''
+
+    def save(self, request):
+        user = super(CustomSocialSignupForm, self).save(request)
+        user.nama = self.cleaned_data['nama']
+        user.noHP = self.cleaned_data['noHP']
+        user.alamat = self.cleaned_data['alamat']
+        user.save()
+        Buyer.objects.create(user=user)
+        return user
