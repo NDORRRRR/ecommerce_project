@@ -11,7 +11,7 @@
                 <h4>Login</h4>
             </div>
             <div class="card-body">
-                <form method="POST" action="{% url 'account_login' %}"> {# Gunakan URL login allauth #}
+                <form method="POST" action="{% url 'account_login' %}"> 
                     {% csrf_token %}
                     {{ form.as_p }} {# Ini akan merender field username dan password dari allauth #}
                     <button type="submit" class="btn btn-primary">Login</button>

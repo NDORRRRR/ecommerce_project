@@ -1,0 +1,40 @@
+{% extends "account/base.html" %}
+{% load i18n %}
+{% load socialaccount %}
+
+{# PENTING: Jika Anda belum menginstal 'django-crispy-forms', hapus baris berikut #}
+{# {% load crispy_forms_tags %} #}
+
+{% block head_title %}{% trans "Sign Up" %}{% endblock %}
+
+{% block inner_content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4>{% trans "Register" %}</h4>
+            </div>
+            <div class="card-body">
+                <form class="signup" id="signup_form" method="post" action="{% url 'account_signup' %}">
+                    {% csrf_token %}
+                    {# PENTING: Jika Anda belum menginstal 'django-crispy-forms', ganti ini dengan {{ form.as_p }} #}
+                    {{ form|crispy }}
+                    
+                    {% if redirect_field_value %}
+                    <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
+                    {% endif %}
+                    <button type="submit" class="btn btn-primary">{% trans "Register" %}</button>
+                </form>
+                <hr>
+                <div class="text-center">
+                    <p>{% trans "Or sign up with:" %}</p>
+                    {% include "socialaccount/snippets/provider_list.html" with process="signup" %}
+                </div>
+                <div class="mt-3 text-center">
+                    <a href="{% url 'account_login' %}" class="btn btn-link">{% trans "Already have an account?" %} {% trans "Login" %}</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
