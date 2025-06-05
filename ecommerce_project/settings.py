@@ -26,9 +26,9 @@ INSTALLED_APPS = [
     'allauth.socialaccount.providers.google',
     'allauth.socialaccount.providers.facebook',
 
-    'ecommerce', # Aplikasi ecommerce Anda
-    'crispy_forms', # Jika menggunakan django-crispy-forms
-    'crispy_bootstrap5', # Jika menggunakan Bootstrap 5 dengan crispy forms
+    'ecommerce',
+    'crispy_forms',
+    'crispy_bootstrap5',
 ]
 
 MIDDLEWARE = [

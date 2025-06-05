@@ -4,17 +4,13 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
 from django.core.paginator import Paginator
-from django.db.models import Sum, Count, Avg, F, Q
+from django.db.models import Sum, Count, Avg, F, Q 
 from django.utils import timezone
 from datetime import datetime, timedelta
 from decimal import Decimal
 import random
 import string
-
-# Pastikan semua model diimpor
 from .models import User, Produk, Pengiriman, Transaksi, TransaksiProduk, Buyer, Cart, CartItem, Laporan1, UlasanProduk
-
-# Pastikan semua form diimpor
 from .forms import UserProfileForm, UlasanProdukForm, CheckoutForm, UpdatePengirimanForm, PengirimanFilterForm
 
 
@@ -299,11 +295,6 @@ def checkout(request):
             'form': form,
         }
         return render(request, 'ecommerce/checkout.html', context)
-
-# --- Transaksi & Pengiriman ---
-# Fungsi buat_transaksi sebelumnya tidak digunakan lagi karena diganti alur keranjang
-# Jika ada kebutuhan untuk transaksi tanpa keranjang, fungsi ini harus didefinisikan ulang secara terpisah
-# atau dihapus.
 
 @login_required
 def riwayat_transaksi(request):
@@ -593,6 +584,44 @@ def melihat_data_pengiriman(request):
         'ekspedisi_chart_data': ekspedisi_chart_data,
         'request_params': request.GET,
     })
+
+@login_required
+def update_status_pengiriman(request, pengiriman_id):
+    if not request.user.is_staff:
+        messages.error(request, 'Akses ditolak!')
+        return redirect('home')
+
+    pengiriman = get_object_or_404(Pengiriman, id=pengiriman_id)
+    
+    if request.method == 'POST':
+        form = UpdatePengirimanForm(request.POST, instance=pengiriman)
+        if form.is_valid():
+            updated_pengiriman = form.save(commit=False)
+            
+            if updated_pengiriman.status == 'shipped' and not updated_pengiriman.tanggal_kirim:
+                updated_pengiriman.tanggal_kirim = timezone.now()
+            
+            if updated_pengiriman.status == 'delivered' and not updated_pengiriman.tanggal_terkirim:
+                updated_pengiriman.tanggal_terkirim = timezone.now()
+                
+                if hasattr(updated_pengiriman, 'transaksi'):
+                    transaksi = updated_pengiriman.transaksi
+                    transaksi.status = 'completed'
+                    transaksi.save()
+
+            updated_pengiriman.save()
+            messages.success(request, f'Status pengiriman #{pengiriman.id} berhasil diupdate!')
+            return redirect('kelola_pengiriman')
+    else:
+        form = UpdatePengirimanForm(instance=pengiriman)
+
+    context = {
+        'form': form,
+        'pengiriman': pengiriman,
+        'status_choices': Pengiriman.STATUS_CHOICES, # Untuk preview di template
+    }
+    
+    return render(request, 'ecommerce/admin/update_pengiriman.html', context)
 
 def mengelola_data_pelanggan(request):
     if not request.user.is_staff:
