@@ -160,11 +160,8 @@ LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 
-ACCOUNT_AUTHENTICATION_METHOD = 'username_email'
-ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_UNIQUE_EMAIL = True
-ACCOUNT_USERNAME_REQUIRED = False # Username tidak wajib (jika login pakai email)
-ACCOUNT_SIGNUP_PASSWORD_ENTER_TWICE = True # Saat daftar, masukkan password dua kali
+ACCOUNT_LOGIN_METHODS = ['username', 'email']
+ACCOUNT_SIGNUP_FIELDS = ['email', 'nama', 'noHP', 'alamat'] 
 ACCOUNT_SESSION_REMEMBER = True # Ingat saya di sesi
 ACCOUNT_FORMS = {
     'signup': 'ecommerce.forms.CustomSignupForm', # Akan kita buat nanti
@@ -201,3 +198,21 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
+
+# Allauth specific settings - GANTI BAGIAN INI
+ACCOUNT_LOGIN_METHODS = ['username', 'email'] # BARU: Menggantikan ACCOUNT_AUTHENTICATION_METHOD
+ACCOUNT_EMAIL_REQUIRED = True # Umumnya tetap true jika login metode email
+ACCOUNT_USERNAME_REQUIRED = False # Jika Anda ingin login hanya pakai email, ini bisa false
+ACCOUNT_SIGNUP_FIELDS = ['email', 'nama', 'noHP', 'alamat'] # BARU: Menggantikan ACCOUNT_EMAIL_REQUIRED, ACCOUNT_USERNAME_REQUIRED, ACCOUNT_SIGNUP_PASSWORD_ENTER_TWICE
+ACCOUNT_SIGNUP_PASSWORD_ENTER_TWICE = True # Ini masih relevan jika Anda ingin password diulang
+
+ACCOUNT_SESSION_REMEMBER = True
+
+ACCOUNT_FORMS = {
+    'signup': 'ecommerce.forms.CustomSignupForm',
+}
+SOCIALACCOUNT_FORMS = {
+    'signup': 'ecommerce.forms.CustomSocialSignupForm',
+}
+
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
