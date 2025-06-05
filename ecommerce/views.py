@@ -16,7 +16,7 @@ from .forms import UserProfileForm, UlasanProdukForm, CheckoutForm, UpdatePengir
 
 def home(request):
     """Homepage dengan daftar produk"""
-    produk_list = Produk.objects.all()
+    produk_list = Produk.objects.all().order_by('id')
 
     search = request.GET.get('search')
     if search:
