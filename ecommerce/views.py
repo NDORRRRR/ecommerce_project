@@ -458,22 +458,27 @@ def detail_pengiriman(request, transaksi_id):
     })
 
 @login_required
-def track_pengiriman(request, transaksi_id):
-    buyer, created = Buyer.objects.get_or_create(user=request.user)
-    transaksi = get_object_or_404(Transaksi, id=transaksi_id, buyer=buyer)
+def track_pengiriman(request, pengiriman_id): # Diubah ke pengiriman_id
+    if request.user.is_staff:
+        # Staff bisa melacak pengiriman manapun
+        pengiriman = get_object_or_404(Pengiriman, id=pengiriman_id)
+    else:
+        # Pembeli hanya bisa melacak pengirimannya sendiri
+        pengiriman = get_object_or_404(Pengiriman, id=pengiriman_id, transaksi__buyer__user=request.user)
+
+    transaksi = pengiriman.transaksi
+    if not transaksi:
+        messages.error(request, 'Data transaksi untuk pengiriman ini tidak ditemukan!')
+        return redirect('home')
     
-    if not transaksi.pengiriman:
-        messages.error(request, 'Data pengiriman tidak ditemukan!')
-        return redirect('detail_transaksi', transaksi_id=transaksi.id)
-    
-    tracking_history = generate_tracking_history(transaksi.pengiriman)
+    tracking_history = generate_tracking_history(pengiriman)
     
     return render(request, 'ecommerce/track_pengiriman.html', {
         'transaksi': transaksi,
-        'pengiriman': transaksi.pengiriman,
+        'pengiriman': pengiriman,
         'tracking_history': tracking_history
     })
-
+    
 def generate_tracking_history(pengiriman):
     """Generate sample tracking history"""
     history = []

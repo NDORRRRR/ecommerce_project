@@ -18,37 +18,14 @@
 </head>
 <body>
     <div class="label-container">
-        <div class="header">
-            <h2>{{ pengiriman.get_ekspedisi_display|upper }}</h2>
-            <p>REGULER</p>
-        </div>
+        <div class="header"><h2>{{ pengiriman.get_ekspedisi_display|upper }}</h2><p>REGULER</p></div>
         <div class="content">
-            <div class="address">
-                <h4>KEPADA:</h4>
-                <p>
-                    <strong>{{ pengiriman.transaksi.pembeli }}</strong><br>
-                    {{ pengiriman.alamat_penerima }}<br>
-                    Telp: {{ pengiriman.transaksi.buyer.user.noHP }}
-                </p>
-            </div>
-            <div class="address">
-                <h4>DARI:</h4>
-                <p>
-                    <strong>Kopag Ecommerce</strong><br>
-                    {{ pengiriman.alamat_pengirim }}
-                </p>
-            </div>
+            <div class="address"><h4>KEPADA:</h4><p><strong>{{ pengiriman.transaksi.pembeli }}</strong><br>{{ pengiriman.alamat_penerima }}<br>Telp: {{ pengiriman.transaksi.buyer.user.noHP }}</p></div>
+            <div class="address"><h4>DARI:</h4><p><strong>Kopag Ecommerce</strong><br>{{ pengiriman.alamat_pengirim }}</p></div>
         </div>
-        <div class="details">
-            <div><strong>Berat:</strong><br>{{ pengiriman.transaksi.get_total_berat|floatformat:1 }} kg</div>
-            <div><strong>Order ID:</strong><br>#{{ pengiriman.transaksi.id }}</div>
-        </div>
-        <div class="footer">
-            <p>Terima Kasih Telah Berbelanja!</p>
-        </div>
+        <div class="details"><div><strong>Berat:</strong><br>{{ pengiriman.transaksi.get_total_berat|floatformat:1 }} kg</div><div><strong>Order ID:</strong><br>#{{ pengiriman.transaksi.id }}</div></div>
+        <div class="footer"><p>Terima Kasih Telah Berbelanja!</p></div>
     </div>
-    <script>
-        window.onload = function() { window.print(); }
-    </script>
+    <script>window.onload = function() { window.print(); }</script>
 </body>
 </html>
