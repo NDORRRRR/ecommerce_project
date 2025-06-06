@@ -77,7 +77,7 @@ class GambarProduk(models.Model):
 
     def __str__(self):
         return f"Gambar untuk {self.produk.nama}"
-
+        
 class Pengiriman(models.Model):
     STATUS_CHOICES = [
         ('pending', 'Pending'),
