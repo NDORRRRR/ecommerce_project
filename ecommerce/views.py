@@ -445,11 +445,19 @@ def konfirmasi_pembayaran(request, transaksi_id):
 
 @login_required
 def detail_pengiriman(request, transaksi_id):
-    buyer, created = Buyer.objects.get_or_create(user=request.user)
-    transaksi = get_object_or_404(Transaksi, id=transaksi_id, buyer=buyer)
+    # Cek apakah pengguna adalah staff/superuser
+    if request.user.is_staff:
+        # Jika staff, bisa lihat transaksi apa saja berdasarkan ID
+        transaksi = get_object_or_404(Transaksi, id=transaksi_id)
+    else:
+        # Jika bukan staff (pengguna biasa), hanya bisa lihat transaksi miliknya
+        buyer, created = Buyer.objects.get_or_create(user=request.user)
+        transaksi = get_object_or_404(Transaksi, id=transaksi_id, buyer=buyer)
 
-    if not transaksi.pengiriman:
-        messages.error(request, 'Data pengiriman tidak ditemukan!')
+    # Cek apakah transaksi punya data pengiriman
+    if not hasattr(transaksi, 'pengiriman'):
+        messages.error(request, 'Data pengiriman tidak ditemukan untuk transaksi ini!')
+        # Redirect ke halaman detail transaksi jika ada, atau ke riwayat jika tidak
         return redirect('detail_transaksi', transaksi_id=transaksi.id)
 
     return render(request, 'ecommerce/detail_pengiriman.html', {
@@ -478,7 +486,7 @@ def track_pengiriman(request, pengiriman_id): # Diubah ke pengiriman_id
         'pengiriman': pengiriman,
         'tracking_history': tracking_history
     })
-    
+
 def generate_tracking_history(pengiriman):
     """Generate sample tracking history"""
     history = []
@@ -634,6 +642,26 @@ def mengelola_data_ongkir(request):
     }
     return render(request, 'ecommerce/admin/kelola_ongkir.html', context)
 
+@login_required
+def data_pengiriman(request):
+    # Mengoptimalkan query dengan select_related
+    pengiriman_list = Pengiriman.objects.select_related('transaksi', 'transaksi__buyer__user').all().order_by('-created_at')
+
+    # Menghitung data statistik untuk ringkasan
+    total_pengiriman = pengiriman_list.count()
+    perlu_dikirim = pengiriman_list.filter(status='pending').count()
+    dalam_perjalanan = pengiriman_list.filter(status='shipped').count()
+    tiba_di_tujuan = pengiriman_list.filter(status='delivered').count()
+
+    context = {
+        'pengiriman_list': pengiriman_list,
+        'total_pengiriman': total_pengiriman,
+        'perlu_dikirim': perlu_dikirim,
+        'dalam_perjalanan': dalam_perjalanan,
+        'tiba_di_tujuan': tiba_di_tujuan,
+    }
+    return render(request, 'ecommerce/admin/data_pengiriman.html', context)
+
 def melihat_data_pengiriman(request):
     if not request.user.is_staff:
         messages.error(request, 'Akses ditolak!')
@@ -664,7 +692,7 @@ def melihat_data_pengiriman(request):
     
     stats = {
         'pending': pengiriman_list.filter(status='pending').count(),
-        'processing': pengiriman_list.filter(status='processing').count(),
+        'processing': pengiriman_list.filter(status='processing').count(), # SUDAH DIPERBAIKI
         'shipped': pengiriman_list.filter(status='shipped').count(),
         'in_transit': pengiriman_list.filter(status='in_transit').count(),
         'delivered': pengiriman_list.filter(status='delivered').count(),

@@ -1,0 +1,44 @@
+{% extends "account/base.html" %}
+{% load i18n %}
+{% load socialaccount %}
+{% load crispy_forms_tags %}
+
+{% block head_title %}{% trans "Login" %}{% endblock %}
+
+{% block inner_content %}
+<div class="card">
+    <div class="card-header text-center">
+        {% trans "Login" %}
+    </div>
+    <div class="card-body">
+        <form class="login" method="post" action="{% url 'account_login' %}">
+            {% csrf_token %}
+            
+            {{ form|crispy }}
+            
+            {% if redirect_field_value %}
+            <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
+            {% endif %}
+            
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-primary">{% trans "Login" %}</button>
+            </div>
+        </form>
+        
+        <div class="mt-3 text-center">
+            <a href="#">Lupa Password?</a>
+        </div>
+
+        <hr>
+        
+        <div class="text-center">
+            <p>{% trans "Atau masuk dengan:" %}</p>
+            {% include "socialaccount/snippets/provider_list.html" with process="login" %}
+        </div>
+        
+    </div>
+    <div class="card-footer text-center">
+        <a href="{% url 'account_signup' %}" class="btn btn-link">{% trans "Belum punya akun? Register" %}</a>
+    </div>
+</div>
+{% endblock %}

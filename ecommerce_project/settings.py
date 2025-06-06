@@ -20,16 +20,16 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.sites', # Pastikan ini ada
 
+    'ecommerce',
+
     # Allauth apps
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
-    'allauth.socialaccount.providers.facebook', # Jika ingin Facebook juga
-    # Anda bisa tambahkan provider lain di sini, contohnya:
-    # 'allauth.socialaccount.providers.github',
+    'allauth.socialaccount.providers.facebook',
+    'allauth.socialaccount.providers.github',
 
-    'ecommerce',
     'crispy_forms',
     'crispy_bootstrap5',
 ]

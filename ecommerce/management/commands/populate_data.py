@@ -57,7 +57,8 @@ class Command(BaseCommand):
             {'nama': 'Keyboard Mechanical', 'kategori': 'Elektronik', 'harga': 500000, 'stock': 15},
             {'nama': 'Tas Laptop', 'kategori': 'Aksesoris', 'harga': 150000, 'stock': 25},
             {'nama': 'Powerbank 20000mAh', 'kategori': 'Aksesoris', 'harga': 200000, 'stock': 30},
-            {'nama': 'Iphone XR', 'kategori': 'Smartphone', 'harga': 3600000, 'stock': 10}
+            {'nama': 'Iphone XR', 'kategori': 'Smartphone', 'harga': 3600000, 'stock': 10},
+            {'nama': 'Workshirt Informatics', 'kategori': 'Baju', 'harga': 250000, 'stock': 10},
         ]
 
         for product_data in products_data:

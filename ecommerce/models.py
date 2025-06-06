@@ -1,8 +1,8 @@
-# ecommerce/models.py
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import MinValueValidator, MaxValueValidator
 from decimal import Decimal
+from django.utils.text import slugify
 
 class User(AbstractUser):
     nama = models.CharField(max_length=100)
@@ -32,12 +32,24 @@ class Buyer(models.Model):
 
 class Produk(models.Model):
     nama = models.CharField(max_length=200)
+    slug = models.SlugField(max_length=220, unique=True, blank=True) 
     kategori = models.CharField(max_length=100)
     harga = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal('0.01'))])
     stock = models.IntegerField(validators=[MinValueValidator(0)])
     berat = models.DecimalField(max_digits=8, decimal_places=2, default=Decimal('1.0'), help_text="Berat dalam kg") # Pastikan Decimal
     gambar = models.ImageField(upload_to='produk_images/', blank=True, null=True)
     rating_rata_rata = models.DecimalField(max_digits=3, decimal_places=2, default=Decimal('0.00'))
+
+    def is_available(self):
+        return self.stock > 0
+    is_available.boolean = True
+    is_available.short_description = 'Tersedia?'
+
+    # FUNGSI SAVE UNTUK MENGISI SLUG OTOMATIS
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.nama)
+        super().save(*args, **kwargs)
 
     def update_average_rating(self):
         reviews = self.ulasanproduk_set.all()
@@ -53,6 +65,18 @@ class Produk(models.Model):
     
     def __str__(self):
         return self.nama
+
+class GambarProduk(models.Model):
+    produk = models.ForeignKey(Produk, related_name='gambar_tambahan', on_delete=models.CASCADE)
+    gambar = models.ImageField(upload_to='produk_images/details/', help_text="Unggah gambar detail produk")
+    alt_text = models.CharField(max_length=255, blank=True, help_text="Teks alternatif untuk gambar (SEO)")
+
+    class Meta:
+        verbose_name = "Gambar Produk"
+        verbose_name_plural = "Gambar-gambar Produk"
+
+    def __str__(self):
+        return f"Gambar untuk {self.produk.nama}"
 
 class Pengiriman(models.Model):
     STATUS_CHOICES = [
@@ -253,3 +277,4 @@ class UlasanProduk(models.Model):
     def delete(self, *args, **kwargs):
         super().delete(*args, **kwargs)
         self.produk.update_average_rating()
+

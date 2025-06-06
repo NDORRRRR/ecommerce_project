@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import *
+from .models import User, Admin, Buyer, Produk, GambarProduk, Pengiriman, LaporanPengiriman, Laporan1, Transaksi, TransaksiProduk
+from .forms import ProdukForm
 
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
@@ -34,12 +35,24 @@ class BuyerAdmin(admin.ModelAdmin):
         return obj.user.email
     get_email.short_description = 'Email'
 
+class GambarProdukInline(admin.TabularInline):
+    model = GambarProduk
+    extra = 1  # Jumlah form kosong tambahan yang ditampilkan
+    readonly_fields = ('thumbnail',) # Untuk menampilkan preview gambar
+
+    def thumbnail(self, instance):
+        if instance.gambar:
+            return format_html(f'<img src="{instance.gambar.url}" width="150"/>')
+        return ""
+
 @admin.register(Produk)
 class ProdukAdmin(admin.ModelAdmin):
-    list_display = ['nama', 'kategori', 'harga', 'stock', 'berat']  # UPDATED: Added berat
-    list_filter = ['kategori']
-    search_fields = ['nama', 'kategori']
-    list_editable = ['harga', 'stock', 'berat']  # UPDATED: Added berat
+    form = ProdukForm
+    list_display = ('nama', 'kategori', 'harga', 'stock', 'rating_rata_rata', 'is_available')
+    list_filter = ('kategori',)
+    search_fields = ('nama', 'deskripsi')
+    prepopulated_fields = {'slug': ('nama',)}
+    inlines = [GambarProdukInline]
 
 @admin.register(Pengiriman)
 class PengirimanAdmin(admin.ModelAdmin):

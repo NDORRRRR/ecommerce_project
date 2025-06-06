@@ -15,7 +15,38 @@
                         <h5><i class="fas fa-info-circle"></i> Detail Produk</h5>
                         {# Tambahkan ini untuk gambar produk #}
                         {% if produk.gambar %}
-                            <img src="{{ produk.gambar.url }}" class="img-fluid rounded mb-3" alt="{{ produk.nama }}" style="max-height: 300px; object-fit: contain;">
+                            <div id="productCarousel" class="carousel slide" data-bs-ride="carousel">
+                                <div class="carousel-indicators">
+                                    <button type="button" data-bs-target="#productCarousel" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
+                                    {% for gambar in produk.gambar_tambahan.all %}
+                                        <button type="button" data-bs-target="#productCarousel" data-bs-slide-to="{{ forloop.counter }}" aria-label="Slide {{ forloop.counter|add:1 }}"></button>
+                                    {% endfor %}
+                                </div>
+
+                                <div class="carousel-inner rounded">
+                                    <div class="carousel-item active">
+                                    {% if produk.gambar %}
+                                        <img src="{{ produk.gambar.url }}" class="d-block w-100" alt="{{ produk.nama }}">
+                                    {% else %}
+                                        <img src="https://via.placeholder.com/600x600.png?text=Gambar+Tidak+Tersedia" class="d-block w-100" alt="Gambar tidak tersedia">
+                                    {% endif %}
+                                </div>
+                                {% for gambar in produk.gambar_tambahan.all %}
+                                    <div class="carousel-item">
+                                        <img src="{{ gambar.gambar.url }}" class="d-block w-100" alt="{{ gambar.alt_text|default:produk.nama }}">
+                                    </div>
+                                {% endfor %}
+                                </div>
+
+                                <button class="carousel-control-prev" type="button" data-bs-target="#productCarousel" data-bs-slide-to="prev">
+                                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                    <span class="visually-hidden">Previous</span>
+                                </button>
+                                <button class="carousel-control-next" type="button" data-bs-target="#productCarousel" data-bs-slide-to="next">
+                                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                    <span class="visually-hidden">Next</span>
+                                </button>
+                            </div>
                         {% else %}
                             <img src="{% static 'ecommerce/img/default_product.png' %}" class="img-fluid rounded mb-3" alt="No Image" style="max-height: 300px; object-fit: contain;">
                         {% endif %}
@@ -38,6 +69,9 @@
                                 <span class="text-danger">Habis</span>
                             {% endif %}
                         </div>
+                        <hr>
+                        <h5>Deskripsi Produk</h5>
+                        <p style="white-space: pre-wrap;">{{ produk.deskripsi|linebreaks }}</p>
                         {# Tampilan Rating Rata-rata Produk #}
                         <div class="mb-3">
                             <strong>Rating:</strong>
