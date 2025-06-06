@@ -530,7 +530,6 @@ def calculate_ongkir(berat_kg, ekspedisi):
         additional_weight = berat_kg - Decimal('1.0')
         return base_rate + (additional_weight * additional_cost_per_kg)
 
-
 @login_required
 def cetak_label_pengiriman(request, pengiriman_id):
     """View untuk menampilkan halaman cetak label pengiriman."""

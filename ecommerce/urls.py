@@ -43,6 +43,7 @@ urlpatterns = [
     path('dashboard/kelola-ongkir/', views.mengelola_data_ongkir, name='kelola_ongkir'),
     path('dashboard/kelola-pelanggan/', views.mengelola_data_pelanggan, name='kelola_pelanggan'),
     path('dashboard/kelola-transaksi/', views.mengelola_data_transaksi, name='kelola_transaksi'),
+    path('dashboard/laporan-transaksi/', views.melihat_laporan_transaksi, name='laporan_transaksi'),
 
     # Admin Pengiriman URLs
     path('dashboard/kelola-pengiriman/', views.melihat_data_pengiriman, name='kelola_pengiriman'), # Menuju view data pengiriman
@@ -52,7 +53,7 @@ urlpatterns = [
     # Admin pages - Melihat Data
     # path('dashboard/data-pengiriman/', views.melihat_data_pengiriman, name='data_pengiriman'), # Ini duplikat jika kelola_pengiriman sudah ke sini
     path('dashboard/laporan-pelanggan/', views.melihat_laporan_pelanggan, name='laporan_pelanggan'),
-    path('dashboard/laporan-transaksi/', views.melihat_laporan_transaksi, name='laporan_transaksi'),
+    path('dashboard/pengiriman/<int:pengiriman_id>/label/', views.cetak_label_pengiriman, name='cetak_label_pengiriman'),
     
     # Admin pages - Melakukan Transaksi
     path('dashboard/transaksi-langsung/', views.melakukan_transaksi_langsung, name='transaksi_langsung'),
