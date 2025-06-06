@@ -1,0 +1,22 @@
+{% extends "account/base.html" %}
+{% load i18n %}
+
+{% block head_title %}{% trans "Keluar" %}{% endblock %}
+
+{% block inner_content %}
+<div class="card shadow-sm">
+    <div class="card-header text-center bg-light">
+        <h4 class="mb-0">{% trans "Keluar Akun" %}</h4>
+    </div>
+    <div class="card-body text-center">
+        <p>{% trans "Apakah Anda yakin ingin keluar?" %}</p>
+        <form method="post" action="{% url 'account_logout' %}">
+            {% csrf_token %}
+            <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                <button type="submit" class="btn btn-danger">{% trans "Ya, Keluar" %}</button>
+                <a href="{% url 'home' %}" class="btn btn-secondary">{% trans "Batal" %}</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -58,8 +58,6 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'allauth.account.context_processors.account',
-                'allauth.socialaccount.context_processors.socialaccount',
             ],
         },
     },
@@ -98,7 +96,7 @@ MEDIA_ROOT = BASE_DIR / 'media'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Allauth Settings
-SITE_ID = 1 # PENTING: Pastikan ini diatur
+SITE_ID = 1
 
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
@@ -109,46 +107,20 @@ LOGIN_URL = 'account_login'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 
-ACCOUNT_LOGIN_METHODS = ['username', 'email']
-ACCOUNT_SIGNUP_FIELDS = ['email', 'nama', 'noHP', 'alamat']
+# Opsi 1: Jika Anda ingin pengguna bisa login dengan username ATAU email, ini sudah benar.
+# Peringatan bisa muncul jika allauth menganggap ada redundansi dengan AUTH_USER_MODEL.
+ACCOUNT_LOGIN_METHODS = ['username', 'email'] # Tetap seperti ini jika Anda ingin keduanya.
+
+# Opsi 2 (Alternatif): Jika Anda ingin lebih tegas hanya login dengan email (dan username adalah pilihan)
+# ACCOUNT_AUTHENTICATION_METHOD = 'email' # Ini pengaturan yang dianjurkan allauth untuk metode login utama.
+# ACCOUNT_USERNAME_REQUIRED = False # Jika Anda tidak memerlukan username untuk login utama, tapi username akan tetap ada.
+# ACCOUNT_EMAIL_REQUIRED = True # Jika email wajib untuk pendaftaran.
+
+ACCOUNT_SIGNUP_FIELDS = ['email', 'nama', 'noHP', 'alamat'] # Ini sudah benar, daftar semua bidang yang Anda inginkan di form pendaftaran.
 ACCOUNT_SESSION_REMEMBER = True
-ACCOUNT_SIGNUP_PASSWORD_ENTER_TWICE = True
-ACCOUNT_USERNAME_REQUIRED = True # Biasanya default, tapi pastikan
-ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_AUTHENTICATION_METHOD = 'username_email' # Memungkinkan login dengan username atau email
-ACCOUNT_EMAIL_VERIFICATION = 'none' # Atau 'mandatory'/'optional' sesuai kebutuhan Anda
-ACCOUNT_UNIQUE_EMAIL = True # Pastikan email unik
+# ACCOUNT_SIGNUP_PASSWORD_ENTER_TWICE = True # Tetap komentari/hapus
 
-# Pengaturan spesifik untuk Social Account Providers (misalnya Google)
-# SOCIALACCOUNT_PROVIDERS = {
-#     'google': {
-#         # Untuk versi allauth yang lebih baru, opsi ini mungkin tidak diperlukan
-#         # atau sudah diatur secara otomatis.
-#         # 'SCOPE': [
-#         #     'profile',
-#         #     'email',
-#         # ],
-#         # 'AUTH_PARAMS': {
-#         #     'access_type': 'online',
-#         # }
-#         'APP': {
-#             'client_id': 'YOUR_GOOGLE_CLIENT_ID', # Ganti ini!
-#             'secret': 'YOUR_GOOGLE_CLIENT_SECRET', # Ganti ini!
-#             'key': ''
-#         }
-#     },
-#     'facebook': {
-#         # 'METHOD': 'oauth2',
-#         # 'SCOPE': ['email', 'public_profile'],
-#         # 'VERIFIED_EMAIL': False,
-#         # 'APP': {
-#         #     'client_id': 'YOUR_FACEBOOK_APP_ID', # Ganti ini!
-#         #     'secret': 'YOUR_FACEBOOK_APP_SECRET', # Ganti ini!
-#         #     'key': ''
-#         # }
-#     }
-# }
-
+ACCOUNT_EMAIL_VERIFICATION = 'none' # Tetapkan ini sesuai kebutuhan Anda
 
 ACCOUNT_FORMS = {
     'signup': 'ecommerce.forms.CustomSignupForm',

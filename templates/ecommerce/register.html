@@ -24,7 +24,7 @@
                 {% endif %}
 
                 <p class="text-center text-muted">
-                    {% trans "Sudah punya akun?" %} <a href="{% url 'account_login' %}">{% trans "Masuk di sini" %}</a>.
+                    {% trans "Sudah punya akun?" %} <a href="{% url 'login' %}">{% trans "Masuk di sini" %}</a>.
                 </p>
                 <hr>
                 <form class="signup" id="signup_form" method="post" action="{% url 'account_signup' %}">

@@ -1,0 +1,30 @@
+{% extends "account/base.html" %}
+{% load i18n %}
+
+{% block head_title %}{% trans "Konfirmasi E-mail" %}{% endblock %}
+
+{% block inner_content %}
+<div class="card shadow-sm">
+    <div class="card-header text-center bg-light">
+        <h4 class="mb-0">{% trans "Konfirmasi E-mail Anda" %}</h4>
+    </div>
+    <div class="card-body">
+        {% if confirmation %}
+            <p class="text-center">
+                {% blocktrans with confirmation.email_address.email as email %}Silakan konfirmasi bahwa <a href="mailto:{{ email }}">{{ email }}</a> adalah e-mail yang benar untuk akun Anda.{% endblocktrans %}
+            </p>
+            <form method="post" action="{% url 'account_confirm_email' confirmation.key %}">
+                {% csrf_token %}
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary">{% trans 'Konfirmasi' %}</button>
+                </div>
+            </form>
+        {% else %}
+            {% url 'account_email' as email_url %}
+            <p class="text-center">
+                {% blocktrans %}Tautan konfirmasi e-mail ini telah kedaluwarsa atau tidak valid. Silakan <a href="{{ email_url }}">kirim ulang e-mail konfirmasi</a>.{% endblocktrans %}
+            </p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

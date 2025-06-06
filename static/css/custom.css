@@ -1,0 +1,52 @@
+:root {
+    --bs-primary: #34568B;
+    --bs-primary-rgb: 52, 86, 139;
+}
+
+.btn-primary {
+    --bs-btn-bg: var(--bs-primary);
+    --bs-btn-border-color: var(--bs-primary);
+    --bs-btn-hover-bg: #2a4770;
+    --bs-btn-hover-border-color: #253e61;
+}
+
+.list-group-item.active {
+    background-color: var(--bs-primary);
+    border-color: var(--bs-primary);
+}
+
+.page-item.active .page-link {
+    background-color: var(--bs-primary);
+    border-color: var(--bs-primary);
+}
+
+a {
+    color: var(--bs-primary);
+    text-decoration: none;
+}
+
+a:hover {
+    color: #2a4770;
+}
+
+.navbar-brand, .nav-link, .dropdown-item {
+    transition: color 0.2s ease-in-out;
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+    transition: all 0.3s ease;
+}
+
+#btn-back-to-top {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    display: none; /* Awalnya disembunyikan */
+    border-radius: 50%;
+    z-index: 1050;
+    width: 50px;
+    height: 50px;
+    font-size: 20px;
+}
