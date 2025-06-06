@@ -37,10 +37,13 @@ urlpatterns = [
     path('dashboard/kelola-pengguna/', views.mengelola_data_pengguna, name='kelola_pengguna'),
     path('dashboard/kelola-kategori/', views.mengelola_data_kategori, name='kelola_kategori'),
     path('dashboard/kelola-produk/', views.mengelola_data_produk, name='kelola_produk'),
+    path('dashboard/produk/tambah/', views.tambah_produk, name='tambah_produk'),
+    path('dashboard/produk/edit/<int:produk_id>/', views.edit_produk, name='edit_produk'),
+    path('dashboard/produk/hapus/<int:produk_id>/', views.hapus_produk, name='hapus_produk'),
     path('dashboard/kelola-ongkir/', views.mengelola_data_ongkir, name='kelola_ongkir'),
     path('dashboard/kelola-pelanggan/', views.mengelola_data_pelanggan, name='kelola_pelanggan'),
     path('dashboard/kelola-transaksi/', views.mengelola_data_transaksi, name='kelola_transaksi'),
-    
+
     # Admin Pengiriman URLs
     path('dashboard/kelola-pengiriman/', views.melihat_data_pengiriman, name='kelola_pengiriman'), # Menuju view data pengiriman
     path('dashboard/pengiriman/<int:pengiriman_id>/update/', views.update_status_pengiriman, name='update_status_pengiriman'),

@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import AuthenticationForm
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
 from django.http import JsonResponse
 from django.core.paginator import Paginator
@@ -12,8 +12,7 @@ from decimal import Decimal
 import random
 import string
 from .models import User, Produk, Pengiriman, Transaksi, TransaksiProduk, Buyer, Cart, CartItem, Laporan1, UlasanProduk
-from .forms import UserProfileForm, UlasanProdukForm, CheckoutForm, UpdatePengirimanForm, PengirimanFilterForm, UserRegistrationForm
-
+from .forms import UserProfileForm, UlasanProdukForm, CheckoutForm, UpdatePengirimanForm, PengirimanFilterForm, UserRegistrationForm, ProdukForm
 
 def home(request):
     """Homepage dengan daftar produk"""
@@ -71,6 +70,59 @@ def user_logout(request):
     logout(request)
     messages.success(request, 'Logout berhasil!')
     return redirect('home')
+
+def is_staff_user(user):
+    return user.is_staff
+
+@login_required
+@user_passes_test(is_staff_user)
+def tambah_produk(request):
+    if request.method == 'POST':
+        form = ProdukForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Produk baru berhasil ditambahkan!')
+            return redirect('kelola_produk')
+    else:
+        form = ProdukForm()
+    
+    context = {
+        'form': form,
+        'title': 'Tambah Produk Baru'
+    }
+    return render(request, 'ecommerce/admin/form_produk.html', context)
+
+@login_required
+@user_passes_test(is_staff_user)
+def edit_produk(request, produk_id):
+    produk = get_object_or_404(Produk, id=produk_id)
+    if request.method == 'POST':
+        form = ProdukForm(request.POST, request.FILES, instance=produk)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'Produk "{produk.nama}" berhasil diperbarui!')
+            return redirect('kelola_produk')
+    else:
+        form = ProdukForm(instance=produk)
+    
+    context = {
+        'form': form,
+        'title': f'Edit Produk: {produk.nama}'
+    }
+    return render(request, 'ecommerce/admin/form_produk.html', context)
+
+@login_required
+@user_passes_test(is_staff_user)
+def hapus_produk(request, produk_id):
+    """View untuk menghapus produk."""
+    produk = get_object_or_404(Produk, id=produk_id)
+    if request.method == 'POST':
+        nama_produk = produk.nama
+        produk.delete()
+        messages.success(request, f'Produk "{nama_produk}" telah dihapus.')
+        return redirect('kelola_produk')
+    
+    return redirect('kelola_produk')
 
 @login_required
 def profile(request):
