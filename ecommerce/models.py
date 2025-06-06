@@ -131,15 +131,16 @@ class Laporan1(models.Model):
         pass
 
 class Transaksi(models.Model):
-    buyer = models.ForeignKey(Buyer, on_delete=models.CASCADE)
-    pembeli = models.CharField(max_length=100)
-    status = models.CharField(max_length=50, choices=[
+    STATUS_CHOICES = [
         ('pending', 'Pending'),
         ('paid', 'Paid'),
         ('shipped', 'Shipped'),
         ('completed', 'Completed'),
         ('cancelled', 'Cancelled')
-    ])
+    ]
+    buyer = models.ForeignKey(Buyer, on_delete=models.CASCADE)
+    pembeli = models.CharField(max_length=100)
+    status = models.CharField(max_length=50, choices=STATUS_CHOICES)
     total_double = models.DecimalField(max_digits=12, decimal_places=2)
     tanggal_date = models.DateTimeField(auto_now_add=True)
     pengiriman = models.OneToOneField(Pengiriman, on_delete=models.SET_NULL, null=True, blank=True)

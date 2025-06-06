@@ -393,20 +393,32 @@ def riwayat_transaksi(request):
         'transaksi_list': transaksi_list
     })
 
+# ecommerce/views.py
+
 @login_required
 def detail_transaksi(request, transaksi_id):
-    """Detail transaksi"""
-    buyer, created = Buyer.objects.get_or_create(user=request.user)
-    if created:
-        messages.info(request, 'Profile buyer telah dibuat otomatis.')
-    
-    transaksi = get_object_or_404(Transaksi, id=transaksi_id, buyer=buyer)
+    """Detail transaksi, bisa diakses oleh buyer pemilik atau staff."""
+
+    if request.user.is_staff:
+        # Jika user adalah staff/admin, cari transaksi hanya berdasarkan ID
+        transaksi = get_object_or_404(Transaksi, id=transaksi_id)
+    else:
+        # Jika user adalah pembeli biasa, pastikan mereka punya profil Buyer
+        buyer, created = Buyer.objects.get_or_create(user=request.user)
+        if created:
+            messages.info(request, 'Profil buyer Anda telah dibuat otomatis.')
+
+        # Cari transaksi berdasarkan ID DAN kepemilikan buyer
+        transaksi = get_object_or_404(Transaksi, id=transaksi_id, buyer=buyer)
+
+    # Logika untuk mengambil item produk di dalam transaksi tetap sama
     transaksi_produk = TransaksiProduk.objects.filter(transaksi=transaksi)
-    
-    return render(request, 'ecommerce/detail_transaksi.html', {
+
+    context = {
         'transaksi': transaksi,
         'transaksi_produk': transaksi_produk
-    })
+    }
+    return render(request, 'ecommerce/detail_transaksi.html', context)
 
 @login_required
 def konfirmasi_pembayaran(request, transaksi_id):
@@ -518,6 +530,19 @@ def calculate_ongkir(berat_kg, ekspedisi):
         additional_weight = berat_kg - Decimal('1.0')
         return base_rate + (additional_weight * additional_cost_per_kg)
 
+
+@login_required
+def cetak_label_pengiriman(request, pengiriman_id):
+    """View untuk menampilkan halaman cetak label pengiriman."""
+    if not request.user.is_staff:
+        messages.error(request, 'Akses ditolak!')
+        return redirect('home')
+
+    pengiriman = get_object_or_404(Pengiriman, id=pengiriman_id)
+    context = {
+        'pengiriman': pengiriman,
+    }
+    return render(request, 'ecommerce/admin/label_pengiriman.html', context)
 
 # --- ADMIN VIEWS ---
 def mengelola_data_pengguna(request):
@@ -916,19 +941,17 @@ def melihat_laporan_transaksi(request):
     ekspedisi_labels = [item['ekspedisi'] for item in ekspedisi_data_raw]
     ekspedisi_data = [item['count'] for item in ekspedisi_data_raw]
 
-    hour_data_raw = transaksi_list.extra({'hour': "strftime('%H', tanggal_date)"}).values('hour').annotate(count=Count('id')).order_by('hour')
-    
-    hour_bins = [0, 0, 0, 0] # 00-06, 06-12, 12-18, 18-24
-    for item in hour_data_raw:
-        hour = int(item['hour'])
+    hour_bins = [0, 0, 0, 0]  # 00-06, 06-12, 12-18, 18-24
+    for transaksi in transaksi_list:
+        hour = transaksi.tanggal_date.hour
         if 0 <= hour < 6:
-            hour_bins[0] += item['count']
+            hour_bins[0] += 1
         elif 6 <= hour < 12:
-            hour_bins[1] += item['count']
+            hour_bins[1] += 1
         elif 12 <= hour < 18:
-            hour_bins[2] += item['count']
-        else: # 18-24
-            hour_bins[3] += item['count']
+            hour_bins[2] += 1
+        else:  # 18-23
+            hour_bins[3] += 1
     hour_data = hour_bins
 
     context = {

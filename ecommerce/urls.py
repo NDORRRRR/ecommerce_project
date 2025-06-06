@@ -47,6 +47,7 @@ urlpatterns = [
     # Admin Pengiriman URLs
     path('dashboard/kelola-pengiriman/', views.melihat_data_pengiriman, name='kelola_pengiriman'), # Menuju view data pengiriman
     path('dashboard/pengiriman/<int:pengiriman_id>/update/', views.update_status_pengiriman, name='update_status_pengiriman'),
+    path('dashboard/pengiriman/<int:pengiriman_id>/label/', views.cetak_label_pengiriman, name='cetak_label_pengiriman'),
     
     # Admin pages - Melihat Data
     # path('dashboard/data-pengiriman/', views.melihat_data_pengiriman, name='data_pengiriman'), # Ini duplikat jika kelola_pengiriman sudah ke sini

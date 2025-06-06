@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Label Pengiriman - #{{ pengiriman.id }}</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+        body { 
+            font-family: 'Roboto', sans-serif;
+            width: 10cm; height: 15cm; 
+            margin: 0; padding: 0.5cm; 
+            box-sizing: border-box; 
+        }
+        .label-container { 
+            border: 2px solid black; 
+            width: 100%; height: 100%; 
+            padding: 15px; 
+            box-sizing: border-box; 
+            display: flex; flex-direction: column;
+        }
+        .header, .footer { text-align: center; font-weight: bold; padding-bottom: 10px; border-bottom: 1px dashed black; }
+        .content { flex-grow: 1; display: flex; flex-direction: column; justify-content: space-around; }
+        .address { margin: 10px 0; }
+        .address h4 { margin: 0 0 5px 0; font-size: 14pt; }
+        .address p { margin: 0; font-size: 12pt; line-height: 1.4; }
+        .details { display: flex; justify-content: space-between; border-top: 1px dashed black; padding-top: 10px; }
+        .details div { text-align: center; }
+        .qr-code { text-align: center; margin-top: 10px; }
+        @media print {
+            body { margin: 0; }
+            .label-container { border: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="label-container">
+        <div class="header">
+            <h2>{{ pengiriman.get_ekspedisi_display|upper }}</h2>
+            <p>REGULER</p>
+        </div>
+        <div class="content">
+            <div class="address">
+                <h4>KEPADA:</h4>
+                <p>
+                    <strong>{{ pengiriman.transaksi.pembeli }}</strong><br>
+                    {{ pengiriman.alamat_penerima }}<br>
+                    Telp: {{ pengiriman.transaksi.buyer.user.noHP }}
+                </p>
+            </div>
+            <div class="address">
+                <h4>DARI:</h4>
+                <p>
+                    <strong>Kopag Ecommerce</strong><br>
+                    {{ pengiriman.alamat_pengirim }}
+                </p>
+            </div>
+        </div>
+        <div class="details">
+            <div><strong>Berat:</strong><br>{{ pengiriman.transaksi.get_total_berat|floatformat:1 }} kg</div>
+            <div><strong>Order ID:</strong><br>#{{ pengiriman.transaksi.id }}</div>
+            <div><strong>Tanggal:</strong><br>{{ pengiriman.created_at|date:"d/m/Y" }}</div>
+        </div>
+        <div class="footer">
+            <p>Mohon jangan dibanting. Terima kasih!</p>
+        </div>
+    </div>
+    <script>
+        // Otomatis membuka dialog print saat halaman dimuat
+        window.onload = function() { window.print(); }
+    </script>
+</body>
+</html>
