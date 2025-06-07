@@ -18,6 +18,7 @@ urlpatterns = [
     
     # User pages
     path('profile/', views.profile, name='profile'),
+    path('resend-verification/', views.resend_verification_email, name='resend_verification_email'),
     # path('transaksi/buat/', views.buat_transaksi, name='buat_transaksi'), # DIKOMENTARI/DIHAPUS
     path('transaksi/riwayat/', views.riwayat_transaksi, name='riwayat_transaksi'),
     path('transaksi/<int:transaksi_id>/', views.detail_transaksi, name='detail_transaksi'),

@@ -4,7 +4,9 @@ from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import AuthenticationForm
-from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.decorators import login_required, user_passes_test, login_required
+from allauth.account.utils import send_email_confirmation
+from allauth.account.models import EmailAddress
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
 from django.forms import inlineformset_factory
@@ -16,7 +18,7 @@ from decimal import Decimal
 import random
 import string
 from .models import User, Produk, Pengiriman, Transaksi, TransaksiProduk, Buyer, Cart, CartItem, Laporan1, UlasanProduk, GambarProduk
-from .forms import UserProfileForm, UlasanProdukForm, CheckoutForm, UpdatePengirimanForm, PengirimanFilterForm, UserRegistrationForm, ProdukForm
+from .forms import UserProfileForm, UlasanProdukForm, CheckoutForm, UpdatePengirimanForm, PengirimanFilterForm, UserRegistrationForm, ProdukForm, FotoProfilForm
 
 
 def home(request):
@@ -119,17 +121,34 @@ def hapus_produk(request, produk_id):
 
 @login_required
 def profile(request):
-    """User profile view"""
+    # Ambil status verifikasi email langsung dari database
+    try:
+        email_address = EmailAddress.objects.get(user=request.user, primary=True)
+        is_verified = email_address.verified
+    except EmailAddress.DoesNotExist:
+        is_verified = False
+
     if request.method == 'POST':
-        form = UserProfileForm(request.POST, instance=request.user)
+        form = FotoProfilForm(request.POST, request.FILES, instance=request.user)
         if form.is_valid():
             form.save()
-            messages.success(request, 'Profile berhasil diupdate!')
-            return redirect('profile')
+            messages.success(request, 'Foto profil Anda berhasil diperbarui.')
+            return redirect('ecommerce:profile')
     else:
-        form = UserProfileForm(instance=request.user)
-    
-    return render(request, 'ecommerce/profile.html', {'form': form})
+        form = FotoProfilForm(instance=request.user)
+        
+    context = {
+        'form': form,
+        'is_verified': is_verified, # <-- Kirim status ini ke template
+    }
+    return render(request, 'ecommerce/profile.html', context)
+
+
+@login_required
+def resend_verification_email(request):
+    send_email_confirmation(request, request.user)
+    messages.success(request, 'Email verifikasi telah dikirim ulang ke email Anda.')
+    return redirect('ecommerce:profile')
 
 def produk_detail(request, produk_id):
     """Detail produk view, menampilkan ulasan dan form ulasan"""

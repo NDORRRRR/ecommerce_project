@@ -35,6 +35,16 @@ class UserProfileForm(UserChangeForm):
             'noHP': forms.TextInput(attrs={'class': 'form-control'}),
         }
 
+class FotoProfilForm(forms.ModelForm):
+    """
+    Form khusus untuk mengunggah atau mengubah foto profil pengguna.
+    """
+    class Meta:
+        model = User
+        fields = ['foto_profil']
+        labels = {
+            'foto_profil': 'Pilih file gambar'
+        }
 
 # Form untuk Ulasan Produk
 class UlasanProdukForm(forms.ModelForm):

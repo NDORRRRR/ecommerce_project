@@ -10,6 +10,7 @@ class User(AbstractUser):
     alamat = models.TextField()
     #password = models.CharField(max_length=128)
     noHP = models.CharField(max_length=15)
+    foto_profil = models.ImageField(upload_to='foto_profil/', null=True, blank=True, default='foto_profil/default.png')
     
     def __str__(self):
         return self.username

@@ -1,55 +1,73 @@
 {% extends "base.html" %}
 {% load i18n %}
-{% load crispy_forms_tags %}
-{% load widget_tweaks %} {# <-- WAJIB: Load library-nya #}
 
-{% block head_title %}{% trans "Daftar Akun Baru" %}{% endblock %}
+{% block head_title %}{% trans "Daftar" %}{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-6 col-lg-5">
-        <div class="card shadow-sm">
-            <div class="card-header text-center bg-light">
-                <h4 class="mb-0">{% trans "Buat Akun Baru" %}</h4>
-            </div>
-            <div class="card-body">
-                <p class="text-center text-muted small">{% blocktrans %}Sudah punya akun? Silakan <a href="{{ login_url }}">masuk</a>.{% endblocktrans %}</p>
-
-                <form class="signup" id="signup_form" method="post" action="{% url 'account_signup' %}">
-                    {% csrf_token %}
-
-                    {{ form.email|as_crispy_field }}
-                    {{ form.nama|as_crispy_field }}
-                    {{ form.noHP|as_crispy_field }}
-                    {{ form.alamat|as_crispy_field }}
-
-                    <div class="mb-3">
-                        <label for="id_password1" class="form-label requiredField">Sandi<span class="asteriskField">*</span></label>
-                        <div class="password-wrapper">
-                            {% render_field form.password1 class+="form-control" placeholder="Buat sandi" %}
-                            <span class="password-toggle-icon" id="togglePassword1">
-                                <i class="fas fa-eye"></i>
-                            </span>
-                        </div>
-                        <div class="form-text text-muted">{{ form.password1.help_text|safe }}</div>
-                        {% if form.password1.errors %}{% for error in form.password1.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}{% endif %}
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="id_password2" class="form-label requiredField">Konfirmasi Sandi<span class="asteriskField">*</span></label>
-                        <div class="password-wrapper">
-                            {% render_field form.password2 class+="form-control" placeholder="Ketik ulang sandi" %}
-                            <span class="password-toggle-icon" id="togglePassword2">
-                                <i class="fas fa-eye"></i>
-                            </span>
-                        </div>
-                        {% if form.password2.errors %}{% for error in form.password2.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}{% endif %}
-                    </div>
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header text-center bg-light">
+                    <h4 class="mb-0">{% trans "Buat Akun Baru" %}</h4>
+                </div>
+                <div class="card-body">
+                    <p class="text-center">{% blocktrans %}Sudah punya akun? Silakan <a href="{{ login_url }}">masuk</a>.{% endblocktrans %}</p>
                     
-                    <div class="d-grid mt-4">
-                        <button class="btn btn-primary" type="submit">{% trans "Daftar" %}</button>
-                    </div>
-                </form>
+                    <form class="signup" id="signup_form" method="post" action="{% url 'account_signup' %}">
+                        {% csrf_token %}
+
+                        {# Tampilkan field USERNAME secara manual #}
+                        <div class="mb-3">
+                            <label for="id_username" class="form-label">Username</label>
+                            <input type="text" name="username" class="form-control" required id="id_username">
+                            {% for error in form.username.errors %}
+                                <div class="invalid-feedback d-block">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        {# Tampilkan field EMAIL secara manual #}
+                        <div class="mb-3">
+                            <label for="id_email" class="form-label">E-mail address</label>
+                            <input type="email" name="email" class="form-control" required id="id_email">
+                            {% for error in form.email.errors %}
+                                <div class="invalid-feedback d-block">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        {# Tampilkan field PASSWORD secara manual #}
+                        <div class="mb-3">
+                             <label for="id_password" class="form-label">Password</label>
+                             <div class="input-group">
+                                 <input type="password" name="password" class="form-control" required id="id_password">
+                                 <span class="input-group-text" onclick="togglePasswordVisibility('id_password')" style="cursor: pointer;">
+                                     <i class="fas fa-eye" id="eye-icon-id_password"></i>
+                                 </span>
+                             </div>
+                             {% for error in form.password.errors %}
+                                 <div class="invalid-feedback d-block">{{ error }}</div>
+                             {% endfor %}
+                        </div>
+
+                        {# Tampilkan field KONFIRMASI PASSWORD (password2) secara manual #}
+                        <div class="mb-3">
+                            <label for="id_password2" class="form-label">Password (again)</label>
+                            <div class="input-group">
+                                <input type="password" name="password2" class="form-control" required id="id_password2">
+                                <span class="input-group-text" onclick="togglePasswordVisibility('id_password2')" style="cursor: pointer;">
+                                    <i class="fas fa-eye" id="eye-icon-id_password2"></i>
+                                </span>
+                            </div>
+                            {% for error in form.password2.errors %}
+                                <div class="invalid-feedback d-block">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="d-grid">
+                            <button class="btn btn-primary" type="submit">{% trans "Daftar" %}</button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
@@ -57,36 +75,19 @@
 {% endblock %}
 
 {% block extra_js %}
-<style>
-.password-wrapper {
-    position: relative;
-}
-.password-toggle-icon {
-    position: absolute;
-    top: 50%;
-    right: 15px;
-    transform: translateY(-50%);
-    cursor: pointer;
-    color: #6c757d;
-}
-</style>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    function setupPasswordToggle(inputId, toggleId) {
-        const passwordInput = document.getElementById(inputId);
-        const toggleButton = document.getElementById(toggleId);
-        if (toggleButton && passwordInput) {
-            const icon = toggleButton.querySelector('i');
-            toggleButton.addEventListener('click', function() {
-                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-                passwordInput.setAttribute('type', type);
-                icon.classList.toggle('fa-eye');
-                icon.classList.toggle('fa-eye-slash');
-            });
-        }
+// Fungsi untuk show/hide password
+function togglePasswordVisibility(fieldId) {
+    const passwordInput = document.getElementById(fieldId);
+    const icon = document.getElementById('eye-icon-' + fieldId);
+    
+    if (passwordInput && icon) {
+        const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+        passwordInput.setAttribute('type', type);
+        
+        icon.classList.toggle('fa-eye');
+        icon.classList.toggle('fa-eye-slash');
     }
-    setupPasswordToggle('id_password1', 'togglePassword1');
-    setupPasswordToggle('id_password2', 'togglePassword2');
-});
+}
 </script>
-{% endblock %}
+{% endblock extra_js %}

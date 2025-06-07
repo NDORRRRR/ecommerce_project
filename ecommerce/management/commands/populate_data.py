@@ -1,27 +1,56 @@
 from django.core.management.base import BaseCommand
-from django.db import transaction
-from ecommerce.models import User, Admin, Buyer, Produk, Kategori # Pastikan Kategori diimpor
+from django.contrib.auth import get_user_model
+from ecommerce.models import *
 from decimal import Decimal
+import random
+
+User = get_user_model()
 
 class Command(BaseCommand):
-    help = 'Populate database with extensive sample data for products.'
+    help = 'Populate database with sample data'
 
-    @transaction.atomic
     def handle(self, *args, **options):
-        self.stdout.write(self.style.SUCCESS('Memulai proses populasi data...'))
+        self.stdout.write('Creating sample data...')
+        
+        # Create admin user
+        if not User.objects.filter(username='admin').exists():
+            admin_user = User.objects.create_superuser(
+                username='admin',
+                password='admin123',
+                email='admin@example.com',
+                nama='Administrator',
+                alamat='Jl. Admin No. 1',
+                noHP='081234567890'
+            )
+            Admin.objects.create(user=admin_user, nama='Administrator')
+            self.stdout.write(self.style.SUCCESS('Created admin user'))
 
-        Produk.objects.all().delete()
-        Kategori.objects.all().delete()
-        self.stdout.write('Data produk dan kategori lama berhasil dihapus.')
+        # Create sample buyers
+        buyer_data = [
+            {
+                'username': 'buyer1', 'password': 'buyer123', 'email': 'buyer1@example.com',
+                'nama': 'Andi Pratama', 'alamat': 'Jl. Merdeka No. 10, Surabaya', 'noHP': '081234567891'
+            },
+            {
+                'username': 'buyer2', 'password': 'buyer123', 'email': 'buyer2@example.com',
+                'nama': 'Sari Indah', 'alamat': 'Jl. Pahlawan No. 15, Surabaya', 'noHP': '081234567892'
+            },
+        ]
 
-        kategori_data = ['Elektronik', 'Aksesoris', 'Smartphone', 'Baju', 'Buku', 'Kamera', 'Audio']
-        kategori_objects = {}
-        for nama_kategori in kategori_data:
-            kategori, created = Kategori.objects.get_or_create(nama=nama_kategori)
-            kategori_objects[nama_kategori] = kategori
-            if created:
-                self.stdout.write(f'Kategori "{nama_kategori}" dibuat.')
+        for data in buyer_data:
+            if not User.objects.filter(username=data['username']).exists():
+                user = User.objects.create_user(
+                    username=data['username'],
+                    password=data['password'],
+                    email=data['email'],
+                    nama=data['nama'],
+                    alamat=data['alamat'],
+                    noHP=data['noHP']
+                )
+                Buyer.objects.create(user=user)
+                self.stdout.write(f'Created buyer: {data["nama"]}')
 
+        # Create sample products
         products_data = [
             # Elektronik
             {'nama': 'Laptop Gaming ASUS ROG Zephyrus G14', 'kategori': 'Elektronik', 'harga': 25999000, 'stock': 15, 'berat': 1.6, 'deskripsi': 'Laptop gaming ultra-portabel dengan AMD Ryzen 9 dan NVIDIA GeForce RTX 4060. Layar Nebula Display 165Hz.'},
@@ -72,4 +101,7 @@ class Command(BaseCommand):
                     )
                     self.stdout.write(f'Produk "{data["nama"]}" berhasil dibuat.')
 
-        self.stdout.write(self.style.SUCCESS('\nProses populasi data produk selesai!'))
+        self.stdout.write(self.style.SUCCESS('Successfully populated database!'))
+        self.stdout.write(self.style.WARNING('Login credentials:'))
+        self.stdout.write('Admin: username=admin, password=admin123')
+        self.stdout.write('Buyer: username=buyer1, password=buyer123')

@@ -1,52 +1,64 @@
-{% extends "base.html" %}
+{% extends "account/base.html" %}
 {% load i18n %}
-{% load crispy_forms_tags %}
-{% load widget_tweaks %} {# <-- WAJIB: Load library-nya #}
 
 {% block head_title %}{% trans "Masuk" %}{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-6 col-lg-5">
-        <div class="card shadow-sm">
-            <div class="card-header text-center bg-light">
-                <h4 class="mb-0">{% trans "Masuk ke Akun Anda" %}</h4>
-            </div>
-            <div class="card-body">
-                <form class="login" method="post" action="{% url 'account_login' %}">
-                    {% csrf_token %}
-                    
-                    {{ form.login|as_crispy_field }}
-                    
-                    <div class="mb-3">
-                        <label for="{{ form.password.id_for_label }}" class="form-label requiredField">
-                            Sandi<span class="asteriskField">*</span>
-                        </label>
-                        <div class="password-wrapper">
-                            {# INI BAGIAN PALING PENTING #}
-                            {% render_field form.password class+="form-control" placeholder="Masukkan sandi Anda" %}
-                            <span class="password-toggle-icon" id="togglePassword">
-                                <i class="fas fa-eye"></i>
-                            </span>
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header text-center bg-light">
+                    <h4 class="mb-0">{% trans "Masuk ke Akun Anda" %}</h4>
+                </div>
+                <div class="card-body">
+                    <form class="login" method="POST" action="{% url 'account_login' %}">
+                        {% csrf_token %}
+
+                        {# --- FIELD UNTUK LOGIN/EMAIL --- #}
+                        <div class="mb-3">
+                            <label for="{{ form.login.id_for_label }}" class="form-label">
+                                {{ form.login.label }}
+                            </label>
+                            {{ form.login }} {# Django akan render input ini #}
+                            {% for error in form.login.errors %}
+                                <div class="invalid-feedback d-block">{{ error }}</div>
+                            {% endfor %}
                         </div>
-                        {% if form.password.errors %}
+
+                        {# --- FIELD UNTUK PASSWORD --- #}
+                        <div class="mb-3">
+                            <label for="id_password" class="form-label">Sandi</label>
+                            <div class="input-group">
+                                <input type="password" name="password" class="form-control" required id="id_password">
+                                <span class="input-group-text" id="togglePassword" style="cursor: pointer;">
+                                    <i class="fas fa-eye"></i>
+                                </span>
+                            </div>
                             {% for error in form.password.errors %}
                                 <div class="invalid-feedback d-block">{{ error }}</div>
                             {% endfor %}
+                        </div>
+                        {% if form.remember %}
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" name="remember" id="id_remember">
+                            <label class="form-check-label" for="id_remember">
+                                {% trans "Ingat Saya" %}
+                            </label>
+                        </div>
                         {% endif %}
-                    </div>
-                    
-                    {% if form.remember %}
-                        {{ form.remember|as_crispy_field }}
-                    {% endif %}
+                        <div class="d-grid">
+                            <button class="btn btn-primary" type="submit">{% trans "Masuk" %}</button>
+                        </div>
 
-                    <div class="d-grid mt-4">
-                        <button type="submit" class="btn btn-primary w-100">{% trans "Masuk" %}</button>
-                    </div>
-                </form>
-            </div>
-            <div class="card-footer text-center bg-light">
-                <small>{% trans "Belum punya akun?" %} <a href="{% url 'account_signup' %}">{% trans "Daftar Sekarang" %}</a></small>
+                        <div class="text-center mt-3">
+                            <a href="{% url 'account_reset_password' %}">{% trans "Lupa Sandi?" %}</a>
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer text-center bg-light">
+                    <small>{% trans "Belum punya akun?" %} <a href="{% url 'account_signup' %}">{% trans "Daftar Sekarang" %}</a></small>
+                </div>
             </div>
         </div>
     </div>
@@ -54,29 +66,24 @@
 {% endblock %}
 
 {% block extra_js %}
-<style>
-/* CSS untuk menempatkan ikon di dalam input box */
-.password-wrapper {
-    position: relative;
-}
-.password-toggle-icon {
-    position: absolute;
-    top: 50%;
-    right: 15px;
-    transform: translateY(-50%);
-    cursor: pointer;
-    color: #6c757d;
-}
-</style>
+{# --- SCRIPT UNTUK SHOW/HIDE PASSWORD --- #}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Pastikan skrip ini ada di dalam base.html atau di sini
+    // untuk menambahkan class 'form-control'
+    document.querySelectorAll('form input:not([type=checkbox])').forEach(function(input) {
+        input.classList.add('form-control');
+    });
+
     const toggleButton = document.getElementById('togglePassword');
-    const passwordInput = document.getElementById('id_password');
-    if (toggleButton && passwordInput) {
+    if (toggleButton) {
+        const passwordInput = document.getElementById('id_password');
         const icon = toggleButton.querySelector('i');
+        
         toggleButton.addEventListener('click', function() {
             const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
             passwordInput.setAttribute('type', type);
+            // Ganti ikon
             icon.classList.toggle('fa-eye');
             icon.classList.toggle('fa-eye-slash');
         });

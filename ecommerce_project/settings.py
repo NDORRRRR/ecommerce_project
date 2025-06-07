@@ -18,7 +18,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django.contrib.sites', # Pastikan ini ada
+    'django.contrib.sites',
 
     'ecommerce',
 
@@ -43,7 +43,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'allauth.account.middleware.AccountMiddleware', # PENTING: Diperlukan oleh allauth
+    'allauth.account.middleware.AccountMiddleware',
 ]
 
 ROOT_URLCONF = 'ecommerce_project.urls'
@@ -108,21 +108,16 @@ LOGIN_URL = 'account_login'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 
-# Opsi 1: Jika Anda ingin pengguna bisa login dengan username ATAU email, ini sudah benar.
-# Peringatan bisa muncul jika allauth menganggap ada redundansi dengan AUTH_USER_MODEL.
-ACCOUNT_LOGIN_METHODS = ['username', 'email'] # Tetap seperti ini jika Anda ingin keduanya.
+ACCOUNT_AUTHENTICATION_METHOD = 'username_email'
+ACCOUNT_USERNAME_REQUIRED = True          # Username WAJIB saat registrasi
+ACCOUNT_EMAIL_REQUIRED = True             # Email WAJIB saat registrasi
+ACCOUNT_EMAIL_VERIFICATION = 'mandatory'  # Tetap wajibkan verifikasi email
+ACCOUNT_UNIQUE_EMAIL = True 
 
-# Opsi 2 (Alternatif): Jika Anda ingin lebih tegas hanya login dengan email (dan username adalah pilihan)
-# ACCOUNT_AUTHENTICATION_METHOD = 'email' # Ini pengaturan yang dianjurkan allauth untuk metode login utama.
-# ACCOUNT_USERNAME_REQUIRED = False # Jika Anda tidak memerlukan username untuk login utama, tapi username akan tetap ada.
-# ACCOUNT_EMAIL_REQUIRED = True # Jika email wajib untuk pendaftaran.
-
-ACCOUNT_SIGNUP_FIELDS = ['email', 'nama', 'noHP', 'alamat'] # Ini sudah benar, daftar semua bidang yang Anda inginkan di form pendaftaran.
+ACCOUNT_SIGNUP_FIELDS = ['email', 'nama', 'noHP', 'alamat'] 
 ACCOUNT_SESSION_REMEMBER = True
-# ACCOUNT_SIGNUP_PASSWORD_ENTER_TWICE = True # Tetap komentari/hapus
 
-ACCOUNT_EMAIL_VERIFICATION = 'none' # Tetapkan ini sesuai kebutuhan Anda
-
+ACCOUNT_EMAIL_VERIFICATION = 'none'
 ACCOUNT_FORMS = {
     'signup': 'ecommerce.forms.CustomSignupForm',
 }
@@ -142,3 +137,6 @@ MESSAGE_TAGS = {
 
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
