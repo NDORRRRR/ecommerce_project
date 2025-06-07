@@ -2,15 +2,13 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 from django.core.validators import MinValueValidator, MaxValueValidator
 from decimal import Decimal
-from .models import User, Produk, Pengiriman, Transaksi, UlasanProduk, Buyer, Laporan1, LaporanPengiriman
+from .models import Produk, Pengiriman, Transaksi, UlasanProduk, Buyer, Laporan1, LaporanPengiriman
+from django.contrib.auth import get_user_model
 from allauth.account.forms import SignupForm # Untuk form pendaftaran standar allauth
 from allauth.socialaccount.forms import SignupForm as SocialSignupForm # Untuk form pendaftaran sosial allauth
 
+User = get_user_model()
 
-# Form Pendaftaran Pengguna (Ini adalah form kustom lama Anda,
-# yang diganti oleh CustomSignupForm dari allauth)
-# Saya pertahankan ini agar tidak ada masalah import jika ada bagian lain yang masih menggunakannya,
-# tetapi sebaiknya tidak digunakan lagi.
 class UserRegistrationForm(UserCreationForm):
     nama = forms.CharField(max_length=100, help_text="Nama Lengkap")
     email = forms.EmailField(help_text="Alamat Email")
@@ -34,6 +32,23 @@ class UserProfileForm(UserChangeForm):
             'alamat': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'noHP': forms.TextInput(attrs={'class': 'form-control'}),
         }
+
+class ProfilUpdateForm(forms.ModelForm):
+    nama_depan = forms.CharField(max_length=30, required=False, label='Nama Depan')
+    nama_belakang = forms.CharField(max_length=30, required=False, label='Nama Belakang')
+
+    class Meta:
+        model = User
+        fields = ['foto_profil', 'nama', 'noHP', 'alamat']
+        labels = {
+            'foto_profil': 'Ganti Foto Profil',
+            'noHP': 'Nomor HP',
+            'alamat': 'Alamat Lengkap',
+        }
+        widgets = {
+            'alamat': forms.Textarea(attrs={'rows': 3}),
+        }
+
 
 class FotoProfilForm(forms.ModelForm):
     """

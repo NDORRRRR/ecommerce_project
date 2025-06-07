@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from .models import User, Admin, Buyer, Produk, GambarProduk, Pengiriman, LaporanPengiriman, Laporan1, Transaksi, TransaksiProduk
-from .forms import ProdukForm
+from .forms import ProdukForm,ProfilUpdateForm
 from django.utils.html import format_html
 
 @admin.register(User)

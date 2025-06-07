@@ -18,7 +18,7 @@ from decimal import Decimal
 import random
 import string
 from .models import User, Produk, Pengiriman, Transaksi, TransaksiProduk, Buyer, Cart, CartItem, Laporan1, UlasanProduk, GambarProduk
-from .forms import UserProfileForm, UlasanProdukForm, CheckoutForm, UpdatePengirimanForm, PengirimanFilterForm, UserRegistrationForm, ProdukForm, FotoProfilForm
+from .forms import UserProfileForm, UlasanProdukForm, CheckoutForm, UpdatePengirimanForm, PengirimanFilterForm, UserRegistrationForm, ProdukForm, FotoProfilForm, ProfilUpdateForm
 
 
 def home(request):
@@ -121,25 +121,19 @@ def hapus_produk(request, produk_id):
 
 @login_required
 def profile(request):
-    # Ambil status verifikasi email langsung dari database
-    try:
-        email_address = EmailAddress.objects.get(user=request.user, primary=True)
-        is_verified = email_address.verified
-    except EmailAddress.DoesNotExist:
-        is_verified = False
-
     if request.method == 'POST':
-        form = FotoProfilForm(request.POST, request.FILES, instance=request.user)
+        # Kirim request.POST dan request.FILES untuk menangani data teks dan file
+        form = ProfilUpdateForm(request.POST, request.FILES, instance=request.user)
         if form.is_valid():
             form.save()
-            messages.success(request, 'Foto profil Anda berhasil diperbarui.')
-            return redirect('ecommerce:profile')
+            messages.success(request, 'Profil Anda berhasil diperbarui.')
+            return redirect('profile') # Redirect ke nama URL 'profile'
     else:
-        form = FotoProfilForm(instance=request.user)
+        # Tampilkan form dengan data user saat ini
+        form = ProfilUpdateForm(instance=request.user)
         
     context = {
-        'form': form,
-        'is_verified': is_verified, # <-- Kirim status ini ke template
+        'form': form
     }
     return render(request, 'ecommerce/profile.html', context)
 
@@ -148,7 +142,7 @@ def profile(request):
 def resend_verification_email(request):
     send_email_confirmation(request, request.user)
     messages.success(request, 'Email verifikasi telah dikirim ulang ke email Anda.')
-    return redirect('ecommerce:profile')
+    return redirect('profile')
 
 def produk_detail(request, produk_id):
     """Detail produk view, menampilkan ulasan dan form ulasan"""

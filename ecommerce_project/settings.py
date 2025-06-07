@@ -35,6 +35,8 @@ INSTALLED_APPS = [
     'widget_tweaks',
 ]
 
+AUTH_USER_MODEL = 'ecommerce.User'
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
