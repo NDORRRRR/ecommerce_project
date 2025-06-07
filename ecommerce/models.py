@@ -30,10 +30,26 @@ class Buyer(models.Model):
     def __str__(self):
         return self.user.username
 
+class Kategori(models.Model):
+    nama = models.CharField(max_length=100, unique=True)
+    slug = models.SlugField(max_length=120, unique=True, blank=True)
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.nama)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.nama
+
+    class Meta:
+        verbose_name_plural = "Kategori"
+
 class Produk(models.Model):
     nama = models.CharField(max_length=200)
     slug = models.SlugField(max_length=220, unique=True, blank=True) 
-    kategori = models.CharField(max_length=100)
+    #kategori = models.CharField(max_length=100)
+    kategori = models.ForeignKey(Kategori, on_delete=models.SET_NULL, null=True, related_name='produk')
     harga = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal('0.01'))])
     stock = models.IntegerField(validators=[MinValueValidator(0)])
     deskripsi = models.TextField(blank=True, null=True)

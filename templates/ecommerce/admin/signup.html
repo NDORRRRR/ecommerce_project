@@ -1,40 +1,122 @@
-{% extends "account/base.html" %}
+{% extends "base.html" %}
+{% load static %}
 {% load i18n %}
-{% load socialaccount %}
+{% load crispy_forms_tags %}
 
-{# PENTING: Jika Anda belum menginstal 'django-crispy-forms', hapus baris berikut #}
-{# {% load crispy_forms_tags %} #}
+{% block head_title %}{% trans "Daftar Akun Baru" %}{% endblock %}
 
-{% block head_title %}{% trans "Sign Up" %}{% endblock %}
-
-{% block inner_content %}
+{% block content %}
 <div class="row justify-content-center">
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-header">
-                <h4>{% trans "Register" %}</h4>
+    <div class="col-md-6 col-lg-5">
+        <div class="card shadow-sm">
+            <div class="card-header text-center bg-light">
+                <h4 class="mb-0">{% trans "Buat Akun Baru" %}</h4>
             </div>
             <div class="card-body">
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+                <p>{% blocktrans %}Sudah punya akun? Silakan <a href="{{ login_url }}">masuk</a>.{% endblocktrans %}</p>
+
                 <form class="signup" id="signup_form" method="post" action="{% url 'account_signup' %}">
                     {% csrf_token %}
-                    {# PENTING: Jika Anda belum menginstal 'django-crispy-forms', ganti ini dengan {{ form.as_p }} #}
-                    {{ form|crispy }}
-                    
+
+                    {# Render field non-sandi menggunakan crispy forms #}
+                    {{ form.email|as_crispy_field }}
+                    {{ form.nama|as_crispy_field }}
+                    {{ form.noHP|as_crispy_field }}
+                    {{ form.alamat|as_crispy_field }}
+
+                    {# --- BAGIAN SANDI PERTAMA --- #}
+                    <div class="mb-3">
+                        <label for="id_password1" class="form-label requiredField">
+                            Sandi<span class="asteriskField">*</span>
+                        </label>
+                        <div class="input-group">
+                            {{ form.password1 }}
+                            <button class="btn btn-outline-secondary" type="button" id="togglePassword1">
+                                <i class="fas fa-eye" id="toggleIcon1"></i>
+                            </button>
+                        </div>
+                        <div class="form-text text-muted">{{ form.password1.help_text|safe }}</div>
+                        {% if form.password1.errors %}
+                            {% for error in form.password1.errors %}
+                                <div class="invalid-feedback d-block">{{ error }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+
+                    {# --- BAGIAN KONFIRMASI SANDI --- #}
+                    <div class="mb-3">
+                        <label for="id_password2" class="form-label requiredField">
+                            Konfirmasi Sandi<span class="asteriskField">*</span>
+                        </label>
+                        <div class="input-group">
+                            {{ form.password2 }}
+                            <button class="btn btn-outline-secondary" type="button" id="togglePassword2">
+                                <i class="fas fa-eye" id="toggleIcon2"></i>
+                            </button>
+                        </div>
+                        {% if form.password2.errors %}
+                            {% for error in form.password2.errors %}
+                                <div class="invalid-feedback d-block">{{ error }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+
                     {% if redirect_field_value %}
-                    <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
+                        <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
                     {% endif %}
-                    <button type="submit" class="btn btn-primary">{% trans "Register" %}</button>
+                    
+                    <div class="d-grid mt-4">
+                        <button class="btn btn-primary" type="submit">{% trans "Daftar" %}</button>
+                    </div>
                 </form>
-                <hr>
-                <div class="text-center">
-                    <p>{% trans "Or sign up with:" %}</p>
-                    {% include "socialaccount/snippets/provider_list.html" with process="signup" %}
-                </div>
-                <div class="mt-3 text-center">
-                    <a href="{% url 'account_login' %}" class="btn btn-link">{% trans "Already have an account?" %} {% trans "Login" %}</a>
-                </div>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    
+    // Fungsi umum untuk setup toggle sandi
+    function setupPasswordToggle(inputId, toggleButtonId, iconId) {
+        const passwordInput = document.getElementById(inputId);
+        const toggleButton = document.getElementById(toggleButtonId);
+        const icon = document.getElementById(iconId);
+
+        if (!passwordInput || !toggleButton) {
+            return;
+        }
+
+        // Terapkan styling Bootstrap yang konsisten
+        passwordInput.classList.add('form-control');
+        passwordInput.style.borderTopRightRadius = '0';
+        passwordInput.style.borderBottomRightRadius = '0';
+        
+        toggleButton.addEventListener('click', function() {
+            // Ubah tipe input antara 'password' dan 'text'
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            
+            // Ganti ikon mata
+            icon.classList.toggle('fa-eye');
+            icon.classList.toggle('fa-eye-slash');
+        });
+    }
+
+    // Terapkan fungsi ke kedua field sandi
+    setupPasswordToggle('id_password1', 'togglePassword1', 'toggleIcon1');
+    setupPasswordToggle('id_password2', 'togglePassword2', 'toggleIcon2');
+
+});
+</script>
 {% endblock %}

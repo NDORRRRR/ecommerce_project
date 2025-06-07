@@ -369,7 +369,20 @@ function calculateChange() {
 }
 
 function processTransaction() {
-    if (Object.keys(cart).length === 0) {
+    const transactionItems = [];
+    document.querySelectorAll('#transaction-items tr').forEach(row => {
+        const id = row.dataset.id;
+        const name = row.cells[0].innerText;
+        const price = parseFloat(row.cells[1].innerText.replace('Rp ', '').replace('.', ''));
+        const quantity = parseInt(row.querySelector('input').value);
+        if (quantity > 0) {
+            transactionItems.push({ id, name, price, quantity });
+        }
+    });
+
+    const total = parseFloat(document.getElementById('total-amount').innerText.replace('Rp ', '').replace('.', ''));
+
+    if (transactionItems.length === 0) {
         alert('Keranjang kosong!');
         return;
     }
@@ -397,11 +410,31 @@ function processTransaction() {
         total: document.getElementById('total').textContent
     };
     
-    // Send to server (implement AJAX)
-    console.log('Processing transaction:', transactionData);
-    
-    // Show success message
-    alert('Transaksi berhasil diproses!');
+
+ fetch("{% url 'proses_transaksi_langsung' %}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            // Jika tidak pakai @csrf_exempt, tambahkan CSRF token header
+            // 'X-CSRFToken': '{{ csrf_token }}' 
+        },
+        body: JSON.stringify({ items: transactionItems, total: total })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            alert(data.message);
+            // Kosongkan keranjang dan reset halaman
+            window.location.reload(); 
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Terjadi kesalahan saat memproses transaksi.');
+    });
+}
     
     // Reset cart
     resetTransaction();

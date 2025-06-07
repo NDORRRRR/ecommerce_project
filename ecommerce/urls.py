@@ -12,9 +12,9 @@ urlpatterns = [
 
     # Authentication (DITANGANI OLEH DJANGO-ALLAUTH)
     #path('accounts/', include('allauth.urls')),
-    path('login/', views.user_login, name='login'),
-    path('register/', views.user_register, name='register'),
-    path('logout/', views.user_logout, name='logout'),
+    #path('login/', views.user_login, name='login'),
+    #path('register/', views.user_register, name='register'),
+    #path('logout/', views.user_logout, name='logout'),
     
     # User pages
     path('profile/', views.profile, name='profile'),
@@ -46,6 +46,7 @@ urlpatterns = [
     path('dashboard/kelola-pelanggan/', views.mengelola_data_pelanggan, name='kelola_pelanggan'),
     path('dashboard/kelola-transaksi/', views.mengelola_data_transaksi, name='kelola_transaksi'),
     path('dashboard/laporan-transaksi/', views.melihat_laporan_transaksi, name='laporan_transaksi'),
+    path('dashboard/transaksi-langsung/proses/', views.proses_transaksi_langsung, name='proses_transaksi_langsung'),
 
     # Admin Pengiriman URLs
     path('dashboard/kelola-pengiriman/', views.melihat_data_pengiriman, name='kelola_pengiriman'), # Menuju view data pengiriman

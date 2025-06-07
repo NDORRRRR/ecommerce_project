@@ -1,44 +1,103 @@
-{% extends "account/base.html" %}
+{% extends "base.html" %}
+{% load static %}
 {% load i18n %}
 {% load socialaccount %}
 {% load crispy_forms_tags %}
 
-{% block head_title %}{% trans "Login" %}{% endblock %}
+{% block head_title %}{% trans "Masuk" %}{% endblock %}
 
-{% block inner_content %}
-<div class="card">
-    <div class="card-header text-center">
-        {% trans "Login" %}
-    </div>
-    <div class="card-body">
-        <form class="login" method="post" action="{% url 'account_login' %}">
-            {% csrf_token %}
-            
-            {{ form|crispy }}
-            
-            {% if redirect_field_value %}
-            <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
-            {% endif %}
-            
-            <div class="d-grid gap-2">
-                <button type="submit" class="btn btn-primary">{% trans "Login" %}</button>
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+        <div class="card shadow-sm">
+            <div class="card-header text-center bg-light">
+                <h4 class="mb-0">{% trans "Masuk ke Akun Anda" %}</h4>
             </div>
-        </form>
-        
-        <div class="mt-3 text-center">
-            <a href="#">Lupa Password?</a>
-        </div>
+            <div class="card-body">
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
 
-        <hr>
-        
-        <div class="text-center">
-            <p>{% trans "Atau masuk dengan:" %}</p>
-            {% include "socialaccount/snippets/provider_list.html" with process="login" %}
+                <form class="login" method="post" action="{% url 'account_login' %}">
+                    {% csrf_token %}
+                    
+                    {# Render field login (email) dan remember me #}
+                    {{ form.login|as_crispy_field }}
+                    
+                    {# --- BAGIAN SANDI DENGAN IKON MATA --- #}
+                    <div class="mb-3">
+                        <label for="id_password" class="form-label requiredField">
+                            Sandi<span class="asteriskField">*</span>
+                        </label>
+                        <div class="input-group">
+                            {{ form.password }}
+                            <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                <i class="fas fa-eye" id="togglePasswordIcon"></i>
+                            </button>
+                        </div>
+                        {% if form.password.errors %}
+                            {% for error in form.password.errors %}
+                                <div class="invalid-feedback d-block">{{ error }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                    {# ------------------------------------ #}
+                    
+                    {{ form.remember|as_crispy_field }}
+
+                    {% if redirect_field_value %}
+                        <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
+                    {% endif %}
+
+                    <div class="d-grid mt-4">
+                        <button type="submit" class="btn btn-primary">{% trans "Masuk" %}</button>
+                    </div>
+                </form>
+
+                <div class="text-center my-3">
+                    <a href="{% url 'account_reset_password' %}">{% trans "Lupa Password?" %}</a>
+                </div>
+                <hr>
+                <div class="text-center">
+                    <p class="text-muted">{% trans "Atau masuk dengan:" %}</p>
+                    {% include "socialaccount/snippets/provider_list.html" with process="login" %}
+                </div>
+            </div>
+            <div class="card-footer text-center bg-light">
+                <small>{% trans "Belum punya akun?" %} <a href="{% url 'account_signup' %}">{% trans "Daftar Sekarang" %}</a></small>
+            </div>
         </div>
-        
-    </div>
-    <div class="card-footer text-center">
-        <a href="{% url 'account_signup' %}" class="btn btn-link">{% trans "Belum punya akun? Register" %}</a>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const togglePassword = document.querySelector('#togglePassword');
+    const passwordInput = document.querySelector('#id_password');
+    const passwordIcon = document.querySelector('#togglePasswordIcon');
+    
+    if (passwordInput) {
+        passwordInput.classList.add('form-control');
+        passwordInput.style.borderTopRightRadius = '0';
+        passwordInput.style.borderBottomRightRadius = '0';
+    }
+    
+    if (togglePassword) {
+        togglePassword.addEventListener('click', function (e) {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            
+            passwordIcon.classList.toggle('fa-eye');
+            passwordIcon.classList.toggle('fa-eye-slash');
+        });
+    }
+});
+</script>
 {% endblock %}

@@ -2,11 +2,7 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 from django.core.validators import MinValueValidator, MaxValueValidator
 from decimal import Decimal
-
-# Import model Anda
-from .models import User, Produk, Pengiriman, Transaksi, UlasanProduk, Buyer
-
-# Import allauth forms
+from .models import User, Produk, Pengiriman, Transaksi, UlasanProduk, Buyer, Laporan1, LaporanPengiriman
 from allauth.account.forms import SignupForm # Untuk form pendaftaran standar allauth
 from allauth.socialaccount.forms import SignupForm as SocialSignupForm # Untuk form pendaftaran sosial allauth
 
@@ -198,28 +194,26 @@ class CustomSignupForm(SignupForm):
         Buyer.objects.create(user=user)
         return user
 
-# Custom Social Signup Form untuk Allauth
-class CustomSocialSignupForm(SocialSignupForm):
-    nama = forms.CharField(max_length=100, label='Nama Lengkap', widget=forms.TextInput(attrs={'class': 'form-control'}))
-    noHP = forms.CharField(max_length=15, label='No. HP', widget=forms.TextInput(attrs={'class': 'form-control'}))
-    alamat = forms.CharField(widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3}), label='Alamat')
+class CustomSignupForm(SignupForm):
+    nama = forms.CharField(max_length=255, label='Nama Lengkap', required=True, 
+                           widget=forms.TextInput(attrs={'placeholder': 'Masukkan nama lengkap Anda'}))
+    noHP = forms.CharField(max_length=15, label='Nomor HP', required=True, 
+                           widget=forms.TextInput(attrs={'placeholder': 'Contoh: 081234567890'}))
+    alamat = forms.CharField(label='Alamat Lengkap', required=True, 
+                             widget=forms.Textarea(attrs={'placeholder': 'Masukkan alamat lengkap untuk pengiriman'}))
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if hasattr(self.user, 'extra_data') and 'first_name' in self.user.extra_data and 'last_name' in self.user.extra_data:
-            self.fields['nama'].initial = f"{self.user.extra_data.get('first_name', '')} {self.user.extra_data.get('last_name', '')}".strip()
-        elif hasattr(self.user, 'extra_data') and 'name' in self.user.extra_data:
-            self.fields['nama'].initial = self.user.extra_data.get('name', '')
-
-        if self.user and self.user.email:
-            self.fields['email'].widget = forms.HiddenInput()
-            self.fields['email'].required = False
-
+    # Fungsi ini akan dipanggil untuk menyimpan data tambahan ke model User
     def save(self, request):
-        user = super(CustomSocialSignupForm, self).save(request)
+        # Panggil fungsi save() dari parent class terlebih dahulu untuk membuat user
+        user = super(CustomSignupForm, self).save(request)
+        
+        # Ambil data dari form dan simpan ke field yang sesuai di model User
         user.nama = self.cleaned_data['nama']
         user.noHP = self.cleaned_data['noHP']
         user.alamat = self.cleaned_data['alamat']
+        
+        # Simpan perubahan pada objek user
         user.save()
-        Buyer.objects.create(user=user)
+        
+        # Kembalikan objek user
         return user

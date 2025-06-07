@@ -1,3 +1,6 @@
+from django.http import JsonResponse
+import json
+from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import AuthenticationForm
@@ -5,7 +8,6 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
 from django.forms import inlineformset_factory
-from django.http import JsonResponse
 from django.core.paginator import Paginator
 from django.db.models import Sum, Count, Avg, F, Q 
 from django.utils import timezone
@@ -15,6 +17,7 @@ import random
 import string
 from .models import User, Produk, Pengiriman, Transaksi, TransaksiProduk, Buyer, Cart, CartItem, Laporan1, UlasanProduk, GambarProduk
 from .forms import UserProfileForm, UlasanProdukForm, CheckoutForm, UpdatePengirimanForm, PengirimanFilterForm, UserRegistrationForm, ProdukForm
+
 
 def home(request):
     """Homepage dengan daftar produk"""
@@ -1037,3 +1040,57 @@ def melihat_laporan_transaksi(request):
         'request': request,
     }
     return render(request, 'ecommerce/admin/laporan_transaksi.html', context)
+
+@csrf_exempt # Gunakan csrf_exempt untuk kemudahan, atau implementasi CSRF token di AJAX Anda
+@login_required
+def proses_transaksi_langsung(request):
+    if request.method == 'POST' and request.user.is_staff:
+        try:
+            data = json.loads(request.body)
+            items = data.get('items', [])
+            total = float(data.get('total', 0))
+            
+            if not items or total == 0:
+                return JsonResponse({'status': 'error', 'message': 'Tidak ada item atau total nol.'}, status=400)
+
+            # Buat objek transaksi baru
+            # Asumsi pelanggan default atau "walk-in" jika tidak ada data pelanggan
+            # Anda mungkin perlu menambahkan field pelanggan di sini
+            transaksi = Transaksi.objects.create(
+                user=request.user,  # Atau user pelanggan jika ada
+                total_harga=total,
+                status_pembayaran='Lunas', # Langsung lunas
+                metode_pembayaran='Tunai' # Asumsi tunai
+            )
+
+            # Simpan setiap item transaksi dan kurangi stok
+            for item in items:
+                try:
+                    produk = Produk.objects.get(id=item['id'])
+                    jumlah = int(item['quantity'])
+                    
+                    if produk.stok < jumlah:
+                        # Sebaiknya ada penanganan error yang lebih baik di sini
+                        # Untuk sekarang kita batalkan transaksi
+                        transaksi.delete()
+                        return JsonResponse({'status': 'error', 'message': f'Stok produk {produk.nama} tidak mencukupi.'}, status=400)
+                    
+                    TransaksiProduk.objects.create(
+                        transaksi=transaksi,
+                        produk=produk,
+                        jumlah=jumlah,
+                        harga_saat_transaksi=produk.harga
+                    )
+                    # Kurangi stok produk
+                    produk.stok -= jumlah
+                    produk.save()
+                except Produk.DoesNotExist:
+                    transaksi.delete()
+                    return JsonResponse({'status': 'error', 'message': f'Produk dengan ID {item["id"]} tidak ditemukan.'}, status=404)
+
+            return JsonResponse({'status': 'success', 'message': 'Transaksi berhasil disimpan!', 'transaksi_id': transaksi.id})
+
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+    
+    return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
