@@ -38,6 +38,7 @@ urlpatterns = [
     path('dashboard/kelola-pengguna/', views.mengelola_data_pengguna, name='kelola_pengguna'),
     path('dashboard/kelola-kategori/', views.mengelola_data_kategori, name='kelola_kategori'),
     path('dashboard/kelola-produk/', views.mengelola_data_produk, name='kelola_produk'),
+    path('dashboard/kelola-produk/edit/<int:produk_id>/', views.edit_produk, name='edit_produk'),
     path('dashboard/produk/tambah/', views.tambah_produk, name='tambah_produk'),
     path('dashboard/produk/edit/<int:produk_id>/', views.edit_produk, name='edit_produk'),
     path('dashboard/produk/hapus/<int:produk_id>/', views.hapus_produk, name='hapus_produk'),

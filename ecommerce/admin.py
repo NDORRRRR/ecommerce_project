@@ -52,7 +52,7 @@ class ProdukAdmin(admin.ModelAdmin):
     list_display = ('nama', 'kategori', 'harga', 'stock', 'rating_rata_rata', 'is_available')
     list_filter = ('kategori',)
     search_fields = ('nama', 'deskripsi')
-    prepopulated_fields = {'slug': ('nama',)}
+    #prepopulated_fields = {'slug': ('nama',)}
     #list_editable = ['harga', 'stock', 'berat']
     inlines = [GambarProdukInline]
 

@@ -36,6 +36,7 @@ class Produk(models.Model):
     kategori = models.CharField(max_length=100)
     harga = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal('0.01'))])
     stock = models.IntegerField(validators=[MinValueValidator(0)])
+    deskripsi = models.TextField(blank=True, null=True)
     berat = models.DecimalField(max_digits=8, decimal_places=2, default=Decimal('1.0'), help_text="Berat dalam kg") # Pastikan Decimal
     gambar = models.ImageField(upload_to='produk_images/', blank=True, null=True)
     rating_rata_rata = models.DecimalField(max_digits=3, decimal_places=2, default=Decimal('0.00'))
@@ -77,7 +78,7 @@ class GambarProduk(models.Model):
 
     def __str__(self):
         return f"Gambar untuk {self.produk.nama}"
-        
+
 class Pengiriman(models.Model):
     STATUS_CHOICES = [
         ('pending', 'Pending'),

@@ -2,7 +2,9 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
+from django.forms import inlineformset_factory
 from django.http import JsonResponse
 from django.core.paginator import Paginator
 from django.db.models import Sum, Count, Avg, F, Q 
@@ -11,7 +13,7 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 import random
 import string
-from .models import User, Produk, Pengiriman, Transaksi, TransaksiProduk, Buyer, Cart, CartItem, Laporan1, UlasanProduk
+from .models import User, Produk, Pengiriman, Transaksi, TransaksiProduk, Buyer, Cart, CartItem, Laporan1, UlasanProduk, GambarProduk
 from .forms import UserProfileForm, UlasanProdukForm, CheckoutForm, UpdatePengirimanForm, PengirimanFilterForm, UserRegistrationForm, ProdukForm
 
 def home(request):
@@ -94,20 +96,45 @@ def tambah_produk(request):
 
 @login_required
 @user_passes_test(is_staff_user)
+@staff_member_required
 def edit_produk(request, produk_id):
     produk = get_object_or_404(Produk, id=produk_id)
+    
+    # Membuat Formset untuk GambarProduk yang terhubung dengan Produk
+    # extra=1 artinya tampilkan 1 form kosong tambahan
+    # can_delete=True artinya kita bisa menghapus gambar yang sudah ada
+    GambarProdukFormSet = inlineformset_factory(
+        Produk, 
+        GambarProduk, 
+        fields=('gambar', 'alt_text'), 
+        extra=1, 
+        can_delete=True
+    )
+
     if request.method == 'POST':
         form = ProdukForm(request.POST, request.FILES, instance=produk)
-        if form.is_valid():
+        # Buat instance formset dengan data dari request juga
+        formset = GambarProdukFormSet(request.POST, request.FILES, instance=produk, prefix='gambar')
+        
+        # Validasi keduanya, form utama dan formset
+        if form.is_valid() and formset.is_valid():
             form.save()
-            messages.success(request, f'Produk "{produk.nama}" berhasil diperbarui!')
+            formset.save() # Simpan juga perubahan pada gambar-gambar
+            
+            messages.success(request, f'Produk "{produk.nama}" berhasil diperbarui.')
             return redirect('kelola_produk')
+        else:
+            messages.error(request, 'Terjadi kesalahan. Mohon periksa kembali data yang Anda masukkan.')
+            
     else:
         form = ProdukForm(instance=produk)
-    
+        # Buat instance formset untuk produk yang ada
+        formset = GambarProdukFormSet(instance=produk, prefix='gambar')
+        
     context = {
         'form': form,
-        'title': f'Edit Produk: {produk.nama}'
+        'formset': formset, # <-- Kirim formset ke template
+        'produk': produk
     }
     return render(request, 'ecommerce/admin/form_produk.html', context)
 

@@ -95,15 +95,16 @@ class CheckoutForm(forms.Form):
 class ProdukForm(forms.ModelForm):
     class Meta:
         model = Produk
-        fields = ['nama', 'kategori', 'harga', 'stock', 'berat', 'gambar']
+        fields = ['nama', 'kategori', 'harga', 'stock', 'berat', 'gambar', 'deskripsi']
         widgets = {
             'nama': forms.TextInput(attrs={'class': 'form-control'}),
             'kategori': forms.TextInput(attrs={'class': 'form-control'}),
             'harga': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
             'stock': forms.NumberInput(attrs={'class': 'form-control'}),
             'berat': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.1', 'placeholder': 'Berat dalam kg'}),
+            # TAMBAHKAN WIDGET UNTUK DESKRIPSI
+            'deskripsi': forms.Textarea(attrs={'class': 'form-control', 'rows': 5}),
         }
-
 # Form Pengiriman (untuk admin)
 class PengirimanForm(forms.ModelForm):
     class Meta:
