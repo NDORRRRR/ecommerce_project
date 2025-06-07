@@ -127,15 +127,15 @@
                                     <li><a class="dropdown-item" href="{% url 'kelola_pengiriman' %}"><i class="fas fa-shipping-fast fa-fw me-2"></i>Kelola Pengiriman</a></li>
                                 {% endif %}
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="{% url 'logout' %}">Logout</a></li>
+                                <li><a class="dropdown-item" href="{% url 'account_logout' %}">Logout</a></li>
                             </ul>
                         </li>
                     {% else %}
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'login' %}">Login</a>
+                            <a class="nav-link" href="{% url 'account_login' %}">Login</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'register' %}">Register</a>
+                            <a class="nav-link" href="{% url 'account_signup' %}">Register</a>
                         </li>
                     {% endif %}
                 </ul>

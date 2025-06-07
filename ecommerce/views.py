@@ -39,43 +39,6 @@ def home(request):
     }
     return render(request, 'ecommerce/home.html', context)
 
-def user_login(request):
-    if request.user.is_authenticated:
-        return redirect('home')
-    if request.method == 'POST':
-        form = AuthenticationForm(request, data=request.POST)
-        if form.is_valid():
-            username = form.cleaned_data.get('username')
-            password = form.cleaned_data.get('password')
-            user = authenticate(username=username, password=password)
-            if user is not None:
-                login(request, user)
-                return redirect('home')
-        messages.error(request, 'Username atau password salah.')
-    form = AuthenticationForm()
-    return render(request, 'ecommerce/login.html', {'form': form})
-
-def user_register(request):
-    if request.user.is_authenticated:
-        return redirect('home')
-    if request.method == 'POST':
-        form = UserRegistrationForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-            Buyer.objects.create(user=user)
-            login(request, user)
-            messages.success(request, 'Registrasi berhasil!')
-            return redirect('home')
-    else:
-        form = UserRegistrationForm()
-    return render(request, 'ecommerce/register.html', {'form': form})
-
-def user_logout(request):
-    """Logout view"""
-    logout(request)
-    messages.success(request, 'Logout berhasil!')
-    return redirect('home')
-
 def is_staff_user(user):
     return user.is_staff
 
