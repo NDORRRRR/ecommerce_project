@@ -140,9 +140,48 @@ def profile(request):
 
 @login_required
 def resend_verification_email(request):
-    send_email_confirmation(request, request.user)
-    messages.success(request, 'Email verifikasi telah dikirim ulang ke email Anda.')
+    """
+    Mengirim ulang email verifikasi dan memberikan debug di terminal.
+    """
+    print("=============================================")
+    print("--- FUNGSI KIRIM ULANG VERIFIKASI DIPANGGIL ---")
+
+    try:
+        # Ambil alamat email utama pengguna
+        email_address = EmailAddress.objects.get(user=request.user, primary=True)
+        
+        print(f"DEBUG: Email Pengguna: {email_address.email}")
+        print(f"DEBUG: Status Verifikasi Saat Ini: {email_address.verified}")
+
+        # Cek apakah emailnya BENAR-BENAR belum terverifikasi
+        if not email_address.verified:
+            print(">>> STATUS: Belum terverifikasi. Mencoba mengirim email...")
+            send_email_confirmation(request, request.user)
+            messages.success(request, f'Email verifikasi telah dikirim ulang ke {email_address.email}. Silakan cek terminal.')
+            print("--- PROSES SELESAI. Cek isi email di atas baris ini jika ada. ---")
+        else:
+            print(">>> STATUS: SUDAH terverifikasi. Tidak ada email yang dikirim.")
+            messages.warning(request, f'Email {email_address.email} Anda sudah terverifikasi sebelumnya.')
+    
+    except EmailAddress.DoesNotExist:
+        print(">>> ERROR: Pengguna tidak memiliki data EmailAddress.")
+        messages.error(request, 'Tidak ditemukan data alamat email untuk akun Anda.')
+
+    print("=============================================\n")
     return redirect('profile')
+
+@login_required
+def check_verification_status(request):
+    """
+    View yang diakses oleh JavaScript untuk mengecek status verifikasi email.
+    """
+    try:
+        email_address = EmailAddress.objects.get(user=request.user, primary=True)
+        is_verified = email_address.verified
+    except EmailAddress.DoesNotExist:
+        is_verified = False
+    
+    return JsonResponse({'is_verified': is_verified})
 
 def produk_detail(request, produk_id):
     """Detail produk view, menampilkan ulasan dan form ulasan"""

@@ -1,10 +1,11 @@
 {% extends 'base.html' %}
+{% load i18n %}
 
-{% block title %}Update Profil{% endblock %}
+{% block title %}Profil Akun{% endblock %}
 
 {% block content %}
 <div class="container mt-4">
-    <h3 class="mb-4">Update Profil Akun</h3>
+    <h3 class="mb-4">Profil Akun</h3>
 
     {% if messages %}
         {% for message in messages %}
@@ -15,26 +16,35 @@
         {% endfor %}
     {% endif %}
 
-    <div class="card">
-        <div class="card-body">
-            <form method="post" enctype="multipart/form-data">
-                {% csrf_token %}
-                <div class="row">
-                    <div class="col-md-4 text-center">
-                        <h5>Foto Profil</h5>
-                        <img src="{{ user.foto_profil.url }}" alt="Foto Profil {{ user.username }}" class="img-fluid rounded-circle my-3" style="width: 150px; height: 150px; object-fit: cover;">
-                        <div class="mb-3">
-                            {{ form.foto_profil }}
-                        </div>
-                    </div>
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header text-center"><h5>Foto Profil</h5></div>
+                <div class="card-body text-center">
+                    <img src="{{ user.foto_profil.url }}" alt="Foto Profil {{ user.username }}" class="img-fluid rounded-circle mb-3" style="width: 150px; height: 150px; object-fit: cover;">
+                    <form method="post" enctype="multipart/form-data" action="{% url 'profile' %}" id="form-foto-profil">
+                        {% csrf_token %}
+                        <div class="mb-3">{{ form.foto_profil }}</div>
+                    </form>
+                </div>
+            </div>
+        </div>
 
-                    <div class="col-md-8">
-                        <h5>Data Diri</h5>
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header"><h5>Data Diri</h5></div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data" action="{% url 'profile' %}" id="form-data-diri">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label"><strong>Username</strong></label>
+                            <input type="text" readonly class="form-control-plaintext" value="{{ user.username }}">
+                        </div>
                         <div class="mb-3">
                             <label for="{{ form.nama.id_for_label }}" class="form-label">{{ form.nama.label }}</label>
                             {{ form.nama }}
                         </div>
-                         <div class="mb-3">
+                        <div class="mb-3">
                             <label for="{{ form.email.id_for_label }}" class="form-label">{{ form.email.label }}</label>
                             {{ form.email }}
                         </div>
@@ -46,16 +56,72 @@
                             <label for="{{ form.alamat.id_for_label }}" class="form-label">{{ form.alamat.label }}</label>
                             {{ form.alamat }}
                         </div>
+                    </form>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <div id="verification-status-container">
+                        <h5>Status Verifikasi Email</h5>
+                        {% if is_verified %}
+                            <p class="text-success small"><i class="fas fa-check-circle"></i> Email <strong>{{ user.email }}</strong> sudah terverifikasi.</p>
+                        {% else %}
+                            <div class="alert alert-warning p-2 small">
+                                <i class="fas fa-exclamation-triangle"></i> Email <strong>{{ user.email }}</strong> belum terverifikasi.
+                                <a href="{% url 'resend_verification_email' %}" class="alert-link">Kirim ulang email verifikasi.</a>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <hr>
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-primary" form="form-foto-profil">
+                            <i class="fas fa-save"></i> Simpan Perubahan
+                        </button>
+                        <a href="{% url 'account_change_password' %}" class="btn btn-secondary">
+                            <i class="fas fa-key"></i> Ubah Password
+                        </a>
                     </div>
                 </div>
-                <hr>
-                <div class="text-end">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save"></i> Simpan Perubahan
-                    </button>
-                </div>
-            </form>
+            </div>
         </div>
     </div>
 </div>
 {% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Fungsi untuk mengecek status verifikasi
+    function checkStatus() {
+        fetch("{% url 'check_verification_status' %}")
+            .then(response => response.json())
+            .then(data => {
+                if (data.is_verified) {
+                    const container = document.getElementById('verification-status-container');
+                    container.innerHTML = `
+                        <h5>Status Verifikasi Email</h5>
+                        <p class="text-success small"><i class="fas fa-check-circle"></i> Email <strong>{{ user.email }}</strong> sudah terverifikasi.</p>
+                    `;
+                    // Hentikan pengecekan jika sudah terverifikasi
+                    if (window.statusCheckInterval) {
+                        clearInterval(window.statusCheckInterval);
+                    }
+                }
+            })
+            .catch(error => console.error('Error fetching verification status:', error));
+    }
+
+    // Cek status saat tab browser kembali aktif
+    document.addEventListener('visibilitychange', function() {
+        if (document.visibilityState === 'visible') {
+            console.log('Tab is visible, checking verification status...');
+            checkStatus();
+        }
+    });
+
+    // Cek status secara periodik setiap 10 detik (misalnya)
+    // Hanya jika belum terverifikasi
+    {% if not is_verified %}
+        window.statusCheckInterval = setInterval(checkStatus, 10000);
+    {% endif %}
+});
+</script>
+{% endblock extra_js %}
