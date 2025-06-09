@@ -1,4 +1,4 @@
-# Django E-Commerce System
+# Tugas Akhir Mata Kuliah PBO tentang oop dan uml
 
 ## Quick Start
 1. `Use Virtual Environment`
