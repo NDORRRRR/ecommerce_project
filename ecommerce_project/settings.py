@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 from django.contrib.messages import constants as messages
-
+from decouple import config
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -9,7 +9,7 @@ SECRET_KEY = 'django-insecure-&)n(ptxbmzgwv&1vpd_t13j!k$!&3+rs3@z)hdj%ack-gypsyu
 
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['kopag.shop', 'www.kopag.shop', '54.151.205.167']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -53,7 +53,7 @@ ROOT_URLCONF = 'ecommerce_project.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -126,7 +126,14 @@ SOCIALACCOUNT_FORMS = {
     'signup': 'ecommerce.forms.CustomSocialSignupForm',
 }
 
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# EMAIL SETTINGS FROM .env FILE
+EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
+EMAIL_HOST = config('EMAIL_HOST', default='localhost')
+EMAIL_PORT = config('EMAIL_PORT', default=25, cast=int)
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=False, cast=bool)
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default=EMAIL_HOST_USER)
 
 MESSAGE_TAGS = {
     messages.DEBUG: 'debug',

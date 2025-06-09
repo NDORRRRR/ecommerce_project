@@ -21,7 +21,11 @@
             <div class="card mb-4">
                 <div class="card-header text-center"><h5>Foto Profil</h5></div>
                 <div class="card-body text-center">
-                    <img src="{{ user.foto_profil.url }}" alt="Foto Profil {{ user.username }}" class="img-fluid rounded-circle mb-3" style="width: 150px; height: 150px; object-fit: cover;">
+                    {% if user.foto_profil %}
+			<img src="{{ user.foto_profil.url }}" alt="Foto Profil {{ user.username }}" class="img-fluid rounded-circle mb-3" style="width: 150px; height: 150px; object-fit: cover;">
+		    {% else %}
+			<img src="{% static 'img/placeholder_profil.png' %}" alt="Foto Profil Default" class="img-fluid rounded-circle mb-3" style="width: 150px; height: 150px; object-fit: cover;">
+		    {% endif %}
                     <form method="post" enctype="multipart/form-data" action="{% url 'profile' %}" id="form-foto-profil">
                         {% csrf_token %}
                         <div class="mb-3">{{ form.foto_profil }}</div>
