@@ -18,7 +18,7 @@ from decimal import Decimal
 import random
 import string
 from .models import User, Produk, Pengiriman, Transaksi, TransaksiProduk, Buyer, Cart, CartItem, Laporan1, UlasanProduk, GambarProduk
-from .forms import UserProfileForm, UlasanProdukForm, CheckoutForm, UpdatePengirimanForm, PengirimanFilterForm, UserRegistrationForm, ProdukForm, FotoProfilForm, ProfilUpdateForm
+from .forms import UlasanProdukForm, CheckoutForm, UpdatePengirimanForm, PengirimanFilterForm, ProdukForm, ProfilUpdateForm
 
 
 def home(request):
@@ -129,7 +129,6 @@ def profile(request):
             messages.success(request, 'Profil Anda berhasil diperbarui.')
             return redirect('profile') # Redirect ke nama URL 'profile'
     else:
-        # Tampilkan form dengan data user saat ini
         form = ProfilUpdateForm(instance=request.user)
         
     context = {

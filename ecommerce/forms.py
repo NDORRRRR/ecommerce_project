@@ -1,64 +1,42 @@
 from django import forms
+from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 from django.core.validators import MinValueValidator, MaxValueValidator
 from decimal import Decimal
-from .models import Produk, Pengiriman, Transaksi, UlasanProduk, Buyer, Laporan1, LaporanPengiriman
-from django.contrib.auth import get_user_model
-from allauth.account.forms import SignupForm # Untuk form pendaftaran standar allauth
-from allauth.socialaccount.forms import SignupForm as SocialSignupForm # Untuk form pendaftaran sosial allauth
+from .models import User, Produk, Pengiriman, Transaksi, TransaksiProduk, Buyer, Cart, CartItem, Laporan1, UlasanProduk, GambarProduk, Ongkir
+from allauth.account.forms import SignupForm
+from allauth.socialaccount.forms import SignupForm as SocialSignupForm 
 
 User = get_user_model()
 
-class UserRegistrationForm(UserCreationForm):
-    nama = forms.CharField(max_length=100, help_text="Nama Lengkap")
-    email = forms.EmailField(help_text="Alamat Email")
-    alamat = forms.CharField(widget=forms.Textarea(attrs={'rows': 3}), help_text="Alamat Lengkap")
-    noHP = forms.CharField(max_length=15, help_text="Nomor Telepon")
-    
-    class Meta(UserCreationForm.Meta):
-        model = User
-        fields = UserCreationForm.Meta.fields + ('nama', 'email', 'alamat', 'noHP',)
+class CustomSignupForm(SignupForm):
+    nama = forms.CharField(max_length=100, label='Nama Lengkap', required=True)
+    noHP = forms.CharField(max_length=15, label='Nomor HP', required=True)
+    alamat = forms.CharField(label='Alamat', widget=forms.Textarea(attrs={'rows': 3}), required=True)
 
-# Form Update Profil Pengguna
-class UserProfileForm(UserChangeForm):
-    password = None # Jangan tampilkan field password untuk keamanan
+    def save(self, request):
+        user = super(CustomSignupForm, self).save(request)
+        
+        user.nama = self.cleaned_data['nama']
+        user.noHP = self.cleaned_data['noHP']
+        user.alamat = self.cleaned_data['alamat']
+        user.save()
+        return user
 
-    class Meta:
-        model = User
-        fields = ['nama', 'email', 'alamat', 'noHP']
-        widgets = {
-            'nama': forms.TextInput(attrs={'class': 'form-control'}),
-            'email': forms.EmailInput(attrs={'class': 'form-control'}),
-            'alamat': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'noHP': forms.TextInput(attrs={'class': 'form-control'}),
-        }
 
 class ProfilUpdateForm(forms.ModelForm):
-    nama_depan = forms.CharField(max_length=30, required=False, label='Nama Depan')
-    nama_belakang = forms.CharField(max_length=30, required=False, label='Nama Belakang')
-
     class Meta:
         model = User
-        fields = ['foto_profil', 'nama', 'noHP', 'alamat']
+        fields = ['foto_profil', 'nama', 'email', 'noHP', 'alamat']
         labels = {
             'foto_profil': 'Ganti Foto Profil',
+            'nama': 'Nama Lengkap',
+            'email': 'Alamat Email',
             'noHP': 'Nomor HP',
             'alamat': 'Alamat Lengkap',
         }
         widgets = {
             'alamat': forms.Textarea(attrs={'rows': 3}),
-        }
-
-
-class FotoProfilForm(forms.ModelForm):
-    """
-    Form khusus untuk mengunggah atau mengubah foto profil pengguna.
-    """
-    class Meta:
-        model = User
-        fields = ['foto_profil']
-        labels = {
-            'foto_profil': 'Pilih file gambar'
         }
 
 # Form untuk Ulasan Produk
@@ -141,19 +119,19 @@ class PengirimanForm(forms.ModelForm):
             'catatan': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Catatan pengiriman (opsional)'}),
         }
 
+class OngkirForm(forms.ModelForm):
+    class Meta:
+        model = Ongkir
+        fields = ['provinsi', 'kabupaten_kota', 'kecamatan', 'biaya']
+
+
 class TransaksiFilterForm(forms.Form):
+    start_date = forms.DateField(label='Dari Tanggal', required=False, widget=forms.DateInput(attrs={'type': 'date'}))
+    end_date = forms.DateField(label='Sampai Tanggal', required=False, widget=forms.DateInput(attrs={'type': 'date'}))
     status = forms.ChoiceField(
-        choices=[('', 'All')] + list(Transaksi._meta.get_field('status').choices),
+        label='Status Transaksi',
         required=False,
-        widget=forms.Select(attrs={'class': 'form-select'})
-    )
-    start_date = forms.DateField(
-        required=False,
-        widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control'})
-    )
-    end_date = forms.DateField(
-        required=False,
-        widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control'})
+        choices=[('', 'Semua Status')] + Transaksi.STATUS_CHOICES,
     )
 
 class UpdatePengirimanForm(forms.ModelForm):
@@ -202,43 +180,3 @@ class PengirimanFilterForm(forms.Form):
             'placeholder': 'Cari berdasarkan nomor resi'
         })
     )
-
-
-# Custom Signup Form untuk Allauth
-class CustomSignupForm(SignupForm):
-    nama = forms.CharField(max_length=100, label='Nama Lengkap', widget=forms.TextInput(attrs={'class': 'form-control'}))
-    noHP = forms.CharField(max_length=15, label='No. HP', widget=forms.TextInput(attrs={'class': 'form-control'}))
-    alamat = forms.CharField(widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3}), label='Alamat')
-
-    def save(self, request):
-        user = super(CustomSignupForm, self).save(request)
-        user.nama = self.cleaned_data['nama']
-        user.noHP = self.cleaned_data['noHP']
-        user.alamat = self.cleaned_data['alamat']
-        user.save()
-        Buyer.objects.create(user=user)
-        return user
-
-class CustomSignupForm(SignupForm):
-    nama = forms.CharField(max_length=255, label='Nama Lengkap', required=True, 
-                           widget=forms.TextInput(attrs={'placeholder': 'Masukkan nama lengkap Anda'}))
-    noHP = forms.CharField(max_length=15, label='Nomor HP', required=True, 
-                           widget=forms.TextInput(attrs={'placeholder': 'Contoh: 081234567890'}))
-    alamat = forms.CharField(label='Alamat Lengkap', required=True, 
-                             widget=forms.Textarea(attrs={'placeholder': 'Masukkan alamat lengkap untuk pengiriman'}))
-
-    # Fungsi ini akan dipanggil untuk menyimpan data tambahan ke model User
-    def save(self, request):
-        # Panggil fungsi save() dari parent class terlebih dahulu untuk membuat user
-        user = super(CustomSignupForm, self).save(request)
-        
-        # Ambil data dari form dan simpan ke field yang sesuai di model User
-        user.nama = self.cleaned_data['nama']
-        user.noHP = self.cleaned_data['noHP']
-        user.alamat = self.cleaned_data['alamat']
-        
-        # Simpan perubahan pada objek user
-        user.save()
-        
-        # Kembalikan objek user
-        return user

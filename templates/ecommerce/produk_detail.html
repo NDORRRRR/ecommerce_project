@@ -126,7 +126,6 @@
             </div>
         </div>
 
-        {# BARU: Bagian Ulasan Produk #}
         <div class="card mt-4">
             <div class="card-header">
                 <h5 class="mb-0"><i class="fas fa-comments me-2"></i>Ulasan Pelanggan ({{ ulasan_produk.count }})</h5>
@@ -160,7 +159,8 @@
                     {% for ulasan in ulasan_produk %}
                         <div class="d-flex align-items-start mb-3 pb-3 border-bottom">
                             <div class="flex-shrink-0 me-3">
-                                <img src="{% static 'ecommerce/img/default_avatar.png' %}" alt="Avatar" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">
+                                <!-- INI BAGIAN YANG DIPERBAIKI -->
+                                <img src="{{ ulasan.buyer.user.foto_profil.url }}" alt="Foto {{ ulasan.buyer.user.username }}" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">
                             </div>
                             <div class="flex-grow-1">
                                 <h6 class="mb-0">{{ ulasan.buyer.user.nama|default:ulasan.buyer.user.username }}</h6>

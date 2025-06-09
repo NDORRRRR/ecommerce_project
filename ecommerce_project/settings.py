@@ -103,23 +103,22 @@ SITE_ID = 1
 
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
-    'allauth.account.auth_backends.AuthenticationBackend',
+    'allauth.account.auth_backends.AuthenticationBackend'
 ]
 
 LOGIN_URL = 'account_login'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 
+AUTH_USER_MODEL = 'ecommerce.User'
 ACCOUNT_AUTHENTICATION_METHOD = 'username_email'
 ACCOUNT_USERNAME_REQUIRED = True          # Username WAJIB saat registrasi
 ACCOUNT_EMAIL_REQUIRED = True             # Email WAJIB saat registrasi
-ACCOUNT_EMAIL_VERIFICATION = 'mandatory'  # Tetap wajibkan verifikasi email
+ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
 ACCOUNT_UNIQUE_EMAIL = True 
 
-ACCOUNT_SIGNUP_FIELDS = ['email', 'nama', 'noHP', 'alamat'] 
 ACCOUNT_SESSION_REMEMBER = True
 
-ACCOUNT_EMAIL_VERIFICATION = 'none'
 ACCOUNT_FORMS = {
     'signup': 'ecommerce.forms.CustomSignupForm',
 }

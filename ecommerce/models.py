@@ -155,6 +155,20 @@ class Pengiriman(models.Model):
     def __str__(self):
         return f"Pengiriman {self.no_resi or self.id} - {self.get_status_display()}"
 
+class Ongkir(models.Model):
+    provinsi = models.CharField(max_length=100)
+    kabupaten_kota = models.CharField(max_length=100, verbose_name="Kabupaten/Kota")
+    kecamatan = models.CharField(max_length=100)
+    biaya = models.DecimalField(max_digits=10, decimal_places=0, help_text="Biaya dalam Rupiah")
+
+    class Meta:
+        verbose_name = "Ongkos Kirim"
+        verbose_name_plural = "Daftar Ongkos Kirim"
+        unique_together = ('provinsi', 'kabupaten_kota', 'kecamatan') # Mencegah data ongkir duplikat untuk lokasi yang sama
+
+    def __str__(self):
+        return f"{self.kecamatan}, {self.kabupaten_kota} - Rp {self.biaya:,.0f}"
+
 class LaporanPengiriman(models.Model):
     pengiriman = models.ForeignKey(Pengiriman, on_delete=models.CASCADE)
     jenis = models.CharField(max_length=100)
