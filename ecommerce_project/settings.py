@@ -2,21 +2,16 @@ import os
 from pathlib import Path
 from django.contrib.messages import constants as messages
 from decouple import config
-<<<<<<< HEAD
-=======
-
->>>>>>> 5bb745ce3572555819dee9ad90043ab523529e64
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG', default=False, cast=bool)
 
-<<<<<<< HEAD
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['kopag.shop', 'www.kopag.shop', '54.151.205.167']
-=======
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -27,7 +22,6 @@ DATABASES = {
         'PORT': '',
     }
 }
->>>>>>> 5bb745ce3572555819dee9ad90043ab523529e64
 
 INSTALLED_APPS = [
     'django.contrib.admin',
