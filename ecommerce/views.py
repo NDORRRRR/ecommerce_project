@@ -10,7 +10,7 @@ from allauth.account.models import EmailAddress
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
 from django.forms import inlineformset_factory
-from django.core.paginator import Paginator
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db.models import Sum, Count, Avg, F, Q 
 from django.utils import timezone
 from datetime import datetime, timedelta
@@ -18,7 +18,7 @@ from decimal import Decimal
 import random
 import string
 from .models import User, Produk, Kategori, Pengiriman, Transaksi, TransaksiProduk, Buyer, Cart, CartItem, Laporan1, UlasanProduk, GambarProduk
-from .forms import UlasanProdukForm, CheckoutForm, UpdatePengirimanForm, PengirimanFilterForm, ProdukForm, ProfilUpdateForm, UserProfileForm
+from .forms import UlasanProdukForm, CheckoutForm, UpdatePengirimanForm, PengirimanFilterForm, ProdukForm, ProfilUpdateForm
 
 
 def home(request):
@@ -26,40 +26,42 @@ def home(request):
     produk_list = Produk.objects.all()
     search_query = request.GET.get('search')
     kategori_filter = request.GET.get('kategori')
+    matching_kategori_ids = []
 
     if search_query:
-	matching_kategori_ids = Kategori.objects.filter(nama__icontains=search_query).values_list('id', flat=True)
+        matching_kategori_ids = Kategori.objects.filter(nama__icontains=search_query).values_list('id', flat=True)
 
-    produk_list = produk_list.filter(
-	Q(nama__icontains=search_query) |
-	Q(deskripsi__icontains=search_query) |
-	Q(kategori__in=list(matching_kategori_ids))
-    )
+        filter_query = Q(nama_produk__icontains=search_query)
 
-   if kategori_filter:
-	produk_list = produk_list.filter(kaegori__nama=kategori_filter)
+        if matching_kategory_ids:
+            filter_query |= Q(kategori__in=matching_kategori_ids)
 
-   paginator = Paginator(produk_list, 10)
-   page = request.GET.get('page')
+        produk_list = produk_list.filter(filter_query)
 
-   try:
-	produk_list = paginator.page(page)
+    if kategori_filter:
+        produk_list = produk_list.filter(kaegori__nama=kategori_filter)
 
-   except PageNotIsNotAnInteger:
-	produk_list = paginato.page(1)
+    paginator = Paginator(produk_list, 10)
+    page = request.GET.get('page')
 
-   except EmptyPage:
-	produk_list = paginator.page(paginator.num_pages)
+    try:
+       produk_list = paginator.page(page)
 
-   all_kategori = Kategori.objects.all()
+    except PageNotAnInteger:
+       produk_list = paginator.page(1)
 
-   context = {
-	'produk_list': produk_list,
-	'kategori_filter': kategori_filter,
-	'search_query': search_query,
-	'all_kategori': all_kategori,
-   }
-   return render(request, 'ecommerce/home.html', context)
+    except EmptyPage:
+        produk_list = paginator.page(paginator.num_pages)
+
+    all_kategori = Kategori.objects.all()
+
+    context = {
+        'produk_list': produk_list,
+        'kategori_filter': kategori_filter,
+        'search_query': search_query,
+        'all_kategori': all_kategori,
+    }
+    return render(request, 'ecommerce/home.html', context)
 
 def is_staff_user(user):
     return user.is_staff
