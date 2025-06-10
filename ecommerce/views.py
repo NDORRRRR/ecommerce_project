@@ -17,29 +17,49 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 import random
 import string
-from .models import User, Produk, Pengiriman, Transaksi, TransaksiProduk, Buyer, Cart, CartItem, Laporan1, UlasanProduk, GambarProduk
-from .forms import UlasanProdukForm, CheckoutForm, UpdatePengirimanForm, PengirimanFilterForm, ProdukForm, ProfilUpdateForm
+from .models import User, Produk, Kategori, Pengiriman, Transaksi, TransaksiProduk, Buyer, Cart, CartItem, Laporan1, UlasanProduk, GambarProduk
+from .forms import UlasanProdukForm, CheckoutForm, UpdatePengirimanForm, PengirimanFilterForm, ProdukForm, ProfilUpdateForm, UserProfileForm
 
 
 def home(request):
     """Homepage dengan daftar produk"""
-    produk_list = Produk.objects.all().order_by('id')
+    produk_list = Produk.objects.all()
+    search_query = request.GET.get('search')
+    kategori_filter = request.GET.get('kategori')
 
-    search = request.GET.get('search')
-    if search:
-        produk_list = produk_list.filter(
-            Q(nama__icontains=search) | Q(kategori__icontains=search)
-        )
-    
-    paginator = Paginator(produk_list, 12)
-    page_number = request.GET.get('page')
-    produk_list = paginator.get_page(page_number)
-    
-    context = {
-        'produk_list': produk_list,
-        'search_query': search
-    }
-    return render(request, 'ecommerce/home.html', context)
+    if search_query:
+	matching_kategori_ids = Kategori.objects.filter(nama__icontains=search_query).values_list('id', flat=True)
+
+    produk_list = produk_list.filter(
+	Q(nama__icontains=search_query) |
+	Q(deskripsi__icontains=search_query) |
+	Q(kategori__in=list(matching_kategori_ids))
+    )
+
+   if kategori_filter:
+	produk_list = produk_list.filter(kaegori__nama=kategori_filter)
+
+   paginator = Paginator(produk_list, 10)
+   page = request.GET.get('page')
+
+   try:
+	produk_list = paginator.page(page)
+
+   except PageNotIsNotAnInteger:
+	produk_list = paginato.page(1)
+
+   except EmptyPage:
+	produk_list = paginator.page(paginator.num_pages)
+
+   all_kategori = Kategori.objects.all()
+
+   context = {
+	'produk_list': produk_list,
+	'kategori_filter': kategori_filter,
+	'search_query': search_query,
+	'all_kategori': all_kategori,
+   }
+   return render(request, 'ecommerce/home.html', context)
 
 def is_staff_user(user):
     return user.is_staff

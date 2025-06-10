@@ -49,6 +49,25 @@ class Command(BaseCommand):
                 )
                 Buyer.objects.create(user=user)
                 self.stdout.write(f'Created buyer: {data["nama"]}')
+        categories_to_create = [
+            'Elektronik',
+            'Aksesoris',
+            'Smartphone',
+            'Kamera',
+            'Audio',
+            'Baju',
+            'Buku',
+            # Add any other categories that might appear in your product data later
+        ]
+
+        self.stdout.write('Ensuring categories exist...')
+        for category_name in categories_to_create:
+            kategori_obj, created = Kategori.objects.get_or_create(nama=category_name)
+            if created:
+                self.stdout.write(self.style.SUCCESS(f'  Created category: {category_name}'))
+            else:
+                self.stdout.write(self.style.WARNING(f'  Category already exists: {category_name}'))
+
 
         # Create sample products
         products_data = [
@@ -89,7 +108,7 @@ class Command(BaseCommand):
 
         for data in products_data:
             if not Produk.objects.filter(nama=data['nama']).exists():
-                kategori_obj = kategori_objects.get(data['kategori'])
+                kategori_obj = Kategori.objects.get(nama=data['kategori'])
                 if kategori_obj:
                     Produk.objects.create(
                         nama=data['nama'],

@@ -50,3 +50,57 @@ a:hover {
     height: 50px;
     font-size: 20px;
 }
+
+@media (max-width: 768px) {
+    /* Contoh: Membuat font sedikit lebih kecil di tablet */
+    body {
+        font-size: 14px;
+    }
+
+    /* Contoh: Jika Anda punya layout dengan sidebar dan konten utama */
+    .main-content {
+        width: 100%; /* Konten utama jadi lebar penuh */
+    }
+
+    .sidebar {
+        display: none; /* Sembunyikan sidebar di tablet/mobile */
+    }
+}
+
+
+/* Untuk mobile (lebar maks 576px) */
+@media (max-width: 576px) {
+    /* Contoh: Mengubah flex container dari baris menjadi kolom */
+    .produk-container {
+        flex-direction: column; /* Produk akan tersusun ke bawah */
+        align-items: center;
+    }
+
+    /* Contoh: Membuat setiap produk memenuhi lebar layar */
+    .produk-item {
+        width: 90%; /* Bukan 100% agar ada sedikit spasi di pinggir */
+        margin-bottom: 20px;
+    }
+
+    /* Contoh: Membuat gambar di detail produk tidak terlalu besar */
+    .produk-detail-gambar {
+        width: 100%;
+        height: auto;
+    }
+
+    /* Contoh: Menyesuaikan ukuran judul */
+    h1 {
+        font-size: 24px;
+    }
+
+    .navbar-custom {
+        /* Mungkin perlu penyesuaian untuk menu navigasi di mobile */
+        /* (misalnya menyembunyikan link dan menampilkan tombol burger menu) */
+    }
+}
+
+.container {
+    width: 90%;      /* Menggunakan persentase */
+    max-width: 1200px; /* Tapi dibatasi lebar maksimumnya untuk layar besar */
+    margin: 0 auto;
+}
