@@ -31,9 +31,9 @@ def home(request):
     if search_query:
         matching_kategori_ids = Kategori.objects.filter(nama__icontains=search_query).values_list('id', flat=True)
 
-        filter_query = Q(nama_produk__icontains=search_query)
+        filter_query = Q(nama__icontains=search_query)
 
-        if matching_kategory_ids:
+        if matching_kategori_ids:
             filter_query |= Q(kategori__in=matching_kategori_ids)
 
         produk_list = produk_list.filter(filter_query)
@@ -144,15 +144,14 @@ def hapus_produk(request, produk_id):
 @login_required
 def profile(request):
     if request.method == 'POST':
-        # Kirim request.POST dan request.FILES untuk menangani data teks dan file
-        form = ProfilUpdateForm(request.POST, request.FILES, instance=request.user)
-        if form.is_valid():
+        profil_form = ProfilUpdateForm(request.POST, request.FILES, instance=request.user)
+        if profil_form.is_valid():
             form.save()
             messages.success(request, 'Profil Anda berhasil diperbarui.')
             return redirect('profile') # Redirect ke nama URL 'profile'
     else:
         form = ProfilUpdateForm(instance=request.user)
-        
+
     context = {
         'form': form
     }
