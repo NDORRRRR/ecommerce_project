@@ -57,6 +57,7 @@ class Produk(models.Model):
     berat = models.DecimalField(max_digits=8, decimal_places=2, default=Decimal('1.0'), help_text="Berat dalam kg") # Pastikan Decimal
     gambar = models.ImageField(upload_to='produk_images/', blank=True, null=True)
     rating_rata_rata = models.DecimalField(max_digits=3, decimal_places=2, default=Decimal('0.00'))
+    stok = models.PositiveIntegerField(default=0)
 
     def is_available(self):
         return self.stock > 0
@@ -169,6 +170,21 @@ class Ongkir(models.Model):
     def __str__(self):
         return f"{self.kecamatan}, {self.kabupaten_kota} - Rp {self.biaya:,.0f}"
 
+class Alamat_penerima(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    nama_lengkap = models.CharField(max_length=255)
+    alamat_lengkap = models.TextField()
+    kota = models.CharField(max_length=100)
+    kode_pos = models.CharField(max_length=10)
+    nomor_telepon = models.CharField(max_length=20)
+    is_default = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.nama_lengkap + " - " + self.alamat_lengkap
+
+    class Meta:
+        verbose_name_plural = "Alamat Penerima"
+
 class LaporanPengiriman(models.Model):
     pengiriman = models.ForeignKey(Pengiriman, on_delete=models.CASCADE)
     jenis = models.CharField(max_length=100)
@@ -188,18 +204,27 @@ class Laporan1(models.Model):
 
 class Transaksi(models.Model):
     STATUS_CHOICES = [
-        ('pending', 'Pending'),
-        ('paid', 'Paid'),
-        ('shipped', 'Shipped'),
-        ('completed', 'Completed'),
-        ('cancelled', 'Cancelled')
+        ('pending', 'Menunggu Pembayaran'),
+        ('paid', 'Terbayar'),
+        ('shipped', 'Dikirim'),
+        ('completed', 'Selesai'),
+        ('cancelled', 'Dibatalakn'),
+        ('refunded', 'Dikembalikan')
     ]
-    buyer = models.ForeignKey(Buyer, on_delete=models.CASCADE)
-    pembeli = models.CharField(max_length=100)
-    status = models.CharField(max_length=50, choices=STATUS_CHOICES)
-    total_double = models.DecimalField(max_digits=12, decimal_places=2)
-    tanggal_date = models.DateTimeField(auto_now_add=True)
-    pengiriman = models.OneToOneField(Pengiriman, on_delete=models.SET_NULL, null=True, blank=True)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    tanggal_transaksi = models.DateTimeField(auto_now_add=True)
+    total_harga = models.DecimalField(max_digits=12, decimal_places=2)
+    status_pembayaran = models.CharField(max_length=20, choices=STATUS_TRANSAKSI, default='pending')
+    # Tambahkan field untuk informasi pengiriman
+    nama_penerima = models.CharField(max_length=255)
+    alamat_lengkap = models.TextField()
+    kota = models.CharField(max_length=100)
+    kode_pos = models.CharField(max_length=10)
+    nomor_telepon = models.CharField(max_length=20)
+    catatan_pengiriman = models.TextField(blank=True, null=True)
+    ongkir = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    nomor_resi = models.CharField(max_length=255, blank=True, null=True, unique=True)
+    tanggal_pengiriman = models.DateTimeField(blank=True, null=True)
     
     def pengeloladatakategori(self):
         pass
@@ -225,10 +250,21 @@ class Transaksi(models.Model):
         return total_berat
 
     def get_subtotal(self):
-        """Menghitung subtotal produk (Total - Ongkir)"""
         if self.pengiriman:
             return self.total_double - self.pengiriman.ongkir
         return self.total_double
+
+class DetailTransaksi(models.Model):
+    transaksi = models.ForeignKey(Transaksi, on_delete=models.CASCADE, related_name='detail_transaksi')
+    produk = models.ForeignKey(Produk, on_delete=models.CASCADE)
+    kuantitas = models.PositiveIntegerField()
+    harga_per_unit = models.DecimalField(max_digits=10, decimal_places=2)
+
+    def __str__(self):
+        return f"{self.kuantitas} x {self.produk.nama_produk} (Transaksi #{self.transaksi.id})"
+
+    def get_total_item_price(self):
+        return self.kuantitas * self.harga_per_unit
 
 class TransaksiProduk(models.Model):
     transaksi = models.ForeignKey(Transaksi, on_delete=models.CASCADE)
@@ -284,6 +320,11 @@ class CartItem(models.Model):
 
     def get_subtotal(self):
         return self.produk.harga * self.quantity
+
+    def clean(self):
+        if self.kuantitas > self.produk.stok:
+            from django.core.exceptions import ValidationError
+            raise ValidationError(f"Kuantitas yang diminta ({self.kuantitas}) melebihi stok yang tersedia ({self.produk.stok}).")
 
 # Model UlasanProduk (Review)
 class UlasanProduk(models.Model):
